@@ -5,7 +5,7 @@ docker-compose up -d --build
 
 ```
 
-`http://localhost:5001/`にアクセス
+`http://localhost:5002/`にアクセス
 
 コンテナを停止するには、次のコマンドを使用します：
 ```
