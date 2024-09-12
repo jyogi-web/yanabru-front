@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # 依存関係をインストール
-COPY requirements.txt .
+COPY /app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションファイルをコピー
