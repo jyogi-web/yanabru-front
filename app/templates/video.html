@@ -4,12 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pose Detection</title>
+    <title>Video Display</title>
 </head>
 
 <body>
-    <h1>Pose Detection with Flask and MediaPipe</h1>
-    <img src="{{ url_for('video_feed') }}" width="800" height="600">
+    <h1>Video Display</h1>
+    <div style="display: flex;">
+        <!-- 左側の動画 -->
+        <div style="flex: 1;">
+            <h2>Sample Video</h2>
+            <video width="100%" controls>
+                <source src="{{ url_for('static', filename='video/エイサー_島人ぬ宝.mp4') }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <!-- 右側のカメラ映像 -->
+        <div style="flex: 1;">
+            <h2>Live Camera Feed</h2>
+            <video id="live-video" width="100%" autoplay></video>
+        </div>
+    </div>
+    <script>
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                document.getElementById('live-video').srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error accessing camera: ', err);
+            });
+    </script>
 </body>
 
 </html>
