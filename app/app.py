@@ -2,8 +2,8 @@ from flask import Flask, render_template, Response, request, jsonify
 import mediapipe as mp
 import cv2
 import numpy as np
-from .ButtonGetInfo import Joycon
 import threading
+from .ButtonGetInfo import Joycon  # 外部から Joycon 関数をインポート
 
 app = Flask(__name__)
 
@@ -40,24 +40,14 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-# Joy-Conのデータ取得を並行して動作させるためのスレッド処理
-def run_joycon():
-    Joycon(72)
-
 @app.route('/video')
 def video():
-    # Joy-Conのデータ取得をスレッドで開始
-    joycon_thread = threading.Thread(target=run_joycon)
-    joycon_thread.start()
-    
     return render_template('video.html')
 
-# ビデオフィードエンドポイント
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# 骨格データを受信しスコアを計算
 @app.route('/pose-data', methods=['POST'])
 def pose_data():
     data = request.json
@@ -68,10 +58,43 @@ def pose_data():
     score = calculate_similarity(reference_pose, joints)
     return jsonify(score=score)
 
-# スコアを計算する関数
 def calculate_similarity(pose1, pose2):
     if len(pose1) != len(pose2):
         return 0
 
     distances = [np.linalg.norm(np.array([p1['x'], p1['y']]) - np.array([p2['x'], p2['y']])) for p1, p2 in zip(pose1, pose2)]
     return 100 - np.mean(distances) * 100
+
+# グローバル変数でタイマースレッドを管理
+timer_thread = None
+stop_timer_event = threading.Event()
+
+# タイマーを開始するエンドポイント
+@app.route('/start-timer', methods=['POST'])
+def start_timer():
+    global timer_thread
+
+    # BPMをリクエストデータから取得
+    data = request.get_json()
+    bpm = data.get('bpm', 72)
+
+    # すでにタイマーが実行中の場合は再度起動しない
+    if timer_thread is None or not timer_thread.is_alive():
+        # 新しいスレッドでJoyconタイマーを実行
+        timer_thread = threading.Thread(target=Joycon, args=(bpm,))
+        timer_thread.start()
+        return jsonify({'message': 'タイマーを開始しました'}), 200
+    else:
+        return jsonify({'message': 'タイマーはすでに実行中です'}), 400
+
+# タイマーを停止するエンドポイント
+@app.route('/stop-timer', methods=['POST'])
+def stop_timer():
+    global stop_timer_event
+
+    # タイマーを停止
+    stop_timer_event.set()
+    return jsonify({'message': 'タイマーを停止しました'}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)

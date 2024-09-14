@@ -41,7 +41,7 @@ def Joycon(BPM):
                 print(f"Joy-Conを振りました！得点: {scoreJoy}")
 
             # 特定のボタンを押しているときにデータを取得
-            if button_right['r'] == 1:
+            if button_right['b'] == 1:
                 count += 1
                 elapsed_time = (datetime.now() - start_time).total_seconds()  # 経過秒数
                 data = {
