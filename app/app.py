@@ -2,6 +2,8 @@ from flask import Flask,render_template,Response,request,jsonify
 import mediapipe as mp
 import cv2
 import numpy as np
+from .ButtonGetInfo import Joycon
+import threading
 
 app = Flask(__name__)
 
@@ -38,6 +40,18 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
+
+# Joy-Conのデータ取得を並行して動作させるためのスレッド処理
+def run_joycon():
+    Joycon(72)
+
+# Joy-Conのデータ取得をスレッドで開始
+joycon_thread = threading.Thread(target=run_joycon)
+joycon_thread.start()
+
+
+
+
 # ルートエンドポイント
 @app.route('/video')
 def video():
@@ -53,7 +67,8 @@ def video_feed():
 def pose_data():
     data = request.json
     joints = data.get('joints', [])
-
+    # カメラのデータ
+    print(joints)
     # お手本のポーズと比較してスコアを計算
     # 仮のデータとしてお手本の骨格を定義
     reference_pose = [{'x': 0.5, 'y': 0.5}, {'x': 0.6, 'y': 0.6}]  # 例として使用
