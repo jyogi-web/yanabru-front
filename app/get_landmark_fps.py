@@ -7,6 +7,8 @@ import time
 # Mediapipeのポーズモジュールを初期化
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
+# 左右反転（鏡合わせ）になってるか
+reverse=True
 
 # 見本動画から骨格ランドマークを抽出し、保存
 def extract_and_save_landmarks(video_path, save_path, target_fps=60):
