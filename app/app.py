@@ -1,4 +1,4 @@
-from flask import Flask,render_template,Response
+from flask import Flask,render_template,Response,request,jsonify
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -47,3 +47,25 @@ def video():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# 骨格データを受信しスコアを計算
+@app.route('/pose-data', methods=['POST'])
+def pose_data():
+    data = request.json
+    joints = data.get('joints', [])
+
+    # お手本のポーズと比較してスコアを計算
+    # 仮のデータとしてお手本の骨格を定義
+    reference_pose = [{'x': 0.5, 'y': 0.5}, {'x': 0.6, 'y': 0.6}]  # 例として使用
+
+    # 類似度を計算（ユークリッド距離）
+    score = calculate_similarity(reference_pose, joints)
+    return jsonify(score=score)
+
+# スコアを計算する関数
+def calculate_similarity(pose1, pose2):
+    if len(pose1) != len(pose2):
+        return 0  # データ数が一致しない場合はスコア0
+
+    distances = [np.linalg.norm(np.array([p1['x'], p1['y']]) - np.array([p2['x'], p2['y']])) for p1, p2 in zip(pose1, pose2)]
+    return 100 - np.mean(distances) * 100  # 距離に基づいてスコアを100点満点で計算
