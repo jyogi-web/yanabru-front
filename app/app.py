@@ -1,47 +1,35 @@
-from flask import Flask, render_template, jsonify
-import mediapipe as mp
-import cv2
+from flask import Flask, render_template, jsonify, request
+import json
 
 app = Flask(__name__)
 
-# MediaPipeの初期化
-mp_pose = mp.solutions.pose
-pose = mp_pose.Pose()
-landmarks_data = []
-
-# お手本動画の読み込み
-video_path = './static/video/sample_15s.mp4'
-cap = cv2.VideoCapture(video_path)
-
-def analyze_sample_video():
-    global landmarks_data
-    while True:
-        success, frame = cap.read()
-        if not success:
-            break  # 動画の最後まで処理したら終了
-
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(frame_rgb)
-
-        frame_landmarks = []
-        if results.pose_landmarks:
-            for landmark in results.pose_landmarks.landmark:
-                frame_landmarks.append({'x': landmark.x, 'y': landmark.y})
-
-        landmarks_data.append(frame_landmarks)
+# ランドマークデータの保存先
+landmarks_file = 'app/static/landmarks/sample_landmarks.json'
 
 # ランドマークデータを提供するエンドポイント
 @app.route('/get-pose-landmarks', methods=['GET'])
 def get_pose_landmarks():
+    with open(landmarks_file, 'r') as file:
+        landmarks_data = json.load(file)
     return jsonify(landmarks=landmarks_data)
+
+# Poseデータを受け取るエンドポイント
+@app.route('/pose-data', methods=['POST'])
+def pose_data():
+    data = request.json
+    # ここで受け取ったポーズデータを処理する
+    print("Received pose data:", data)
+    # 例としてスコアを固定値で返す
+    return jsonify(score=100)
 
 # メインエンドポイント
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# アプリケーション開始時に動画解析を行う
-analyze_sample_video()
+@app.route('/landtest')
+def landtest():
+    return render_template('landtest.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
