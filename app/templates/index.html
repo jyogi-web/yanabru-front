@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{url_for('static',filename='css/video.css')}}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/video.css') }}" rel="stylesheet" />
     <title>Dance Game</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -21,7 +21,7 @@
         <!-- 左側の動画 -->
         <div style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%">
+            <video id="sample-video" width="100%" muted>
                 <source src="{{ url_for('static', filename='video/sample_15s.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -43,6 +43,7 @@
     </div>
 
     <script>
+        // HTML要素の取得
         const sampleVideoElement = document.getElementById('sample-video');
         const sampleCanvasElement = document.getElementById('sample-canvas');
         const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
@@ -55,6 +56,7 @@
             const response = await fetch('/get-pose-landmarks');
             const data = await response.json();
             savedLandmarks = data.landmarks;
+            console.log('Saved landmarks:', savedLandmarks);
         }
 
         // スタートボタンを押したときの処理
@@ -73,7 +75,13 @@
             sampleCanvasElement.width = videoWidth;
             sampleCanvasElement.height = videoHeight;
 
-            const currentFrame = Math.floor(sampleVideoElement.currentTime * 30);  // 30fpsでフレーム数を計算
+            // 現在のフレームに対応するランドマークデータを取得
+            const currentTime = sampleVideoElement.currentTime;
+            const fps = 10;  // 保存したランドマークのFPSに合わせる
+            const currentFrame = Math.floor(currentTime * fps);  // 10fpsでフレーム数を計算
+
+            console.log('Current frame:', currentFrame);
+
             if (savedLandmarks[currentFrame]) {
                 sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
                 sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
@@ -84,10 +92,12 @@
                     const y = landmark.y * videoHeight;
                     sampleCanvasCtx.beginPath();
                     sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
+                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';  // 赤色
                     sampleCanvasCtx.fill();
                     sampleCanvasCtx.stroke();
                 }
+            } else {
+                console.log('No landmarks for this frame');
             }
 
             if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
@@ -116,7 +126,7 @@
                     const y = landmark.y * videoHeight;
                     canvasCtx.beginPath();
                     canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                    canvasCtx.fillStyle = 'rgb(0,255,0)';
+                    canvasCtx.fillStyle = 'rgb(0,255,0)';  // 緑色
                     canvasCtx.fill();
                     canvasCtx.stroke();
                 }
@@ -125,6 +135,7 @@
             sendPoseData(results.poseLandmarks);
         }
 
+        // MediaPipe Poseの初期化
         const pose = new Pose({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
         });
@@ -138,6 +149,7 @@
 
         pose.onResults(onResults);
 
+        // カメラの設定と開始
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await pose.send({ image: videoElement });
@@ -147,6 +159,7 @@
         });
         camera.start();
 
+        // Poseデータをサーバーに送信
         function sendPoseData(poseLandmarks) {
             const poseData = poseLandmarks.map(landmark => ({
                 x: landmark.x,
@@ -168,6 +181,7 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // スコアを更新する関数
         function updateScore(score) {
             document.getElementById('score').innerText = score;
         }
