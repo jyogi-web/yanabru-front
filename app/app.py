@@ -3,9 +3,15 @@ import mediapipe as mp
 import cv2
 import numpy as np
 import threading
-from .ButtonGetInfo import Joycon  # 外部から Joycon 関数をインポート
+from .Joycon import joycon  # Joycon関数をインポート
+from .scoring_logic import check_acceleration_and_score  # スコア計算ロジックをインポート]
+from .ButtonGetInfo import JoyconInfo, latest_data  # Joyconデータとグローバル変数をインポート
 
 app = Flask(__name__)
+
+# グローバル変数でタイマースレッドを管理
+timer_thread = None
+stop_timer_event = threading.Event()
 
 @app.route('/')
 def index():
@@ -74,25 +80,40 @@ stop_timer_event = threading.Event()
 def start_timer():
     global timer_thread
 
-    # BPMをリクエストデータから取得
-    data = request.get_json()
-    bpm = data.get('bpm', 72)
-
-    # すでにタイマーが実行中の場合は再度起動しない
     if timer_thread is None or not timer_thread.is_alive():
+        # クライアントから BPM を取得
+        bpm = request.json.get('bpm', 72)  # デフォルト値として 72 を使用
         # 新しいスレッドでJoyconタイマーを実行
-        timer_thread = threading.Thread(target=Joycon, args=(bpm,))
+        timer_thread = threading.Thread(target=JoyconInfo, args=(bpm,))  # 引数bpmを渡す
         timer_thread.start()
         return jsonify({'message': 'タイマーを開始しました'}), 200
     else:
         return jsonify({'message': 'タイマーはすでに実行中です'}), 400
 
+
+@app.route('/check-score', methods=['POST'])
+def check_score():
+    global score
+
+    # Joy-Con から取得したデータを使用
+    accel_data = latest_data['accel']
+    joycon_time = latest_data['timestamp']  # Joy-Con のタイムスタンプを取得
+
+    # 動画の現在の再生時間をクライアントから取得
+    data = request.json
+    video_time = data.get('video_time', 0)
+
+    # Joy-Conのデータがあるか確認
+    if accel_data is not None:
+        # 再生時間と加速度データに基づいて得点を計算
+        score = check_acceleration_and_score(accel_data, video_time, score)
+
+    return jsonify({"score": score})
+
 # タイマーを停止するエンドポイント
 @app.route('/stop-timer', methods=['POST'])
 def stop_timer():
     global stop_timer_event
-
-    # タイマーを停止
     stop_timer_event.set()
     return jsonify({'message': 'タイマーを停止しました'}), 200
 

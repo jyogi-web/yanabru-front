@@ -3,7 +3,12 @@ import time
 from datetime import datetime
 import json
 
-def Joycon(BPM):
+# グローバル変数で最新の加速度データとタイムスタンプを保持
+latest_data = {"accel": None, "timestamp": None}
+
+def JoyconInfo(BPM):
+    global latest_data  # グローバル変数を参照
+
     # 初期化
     scoreJoy = 0
     result = {}
@@ -34,8 +39,11 @@ def Joycon(BPM):
             accel_change_y = abs(accel['y'] - prev_accel['y'])
             accel_change_z = abs(accel['z'] - prev_accel['z'])
 
+            # グローバル変数に加速度データとタイムスタンプを更新
+            latest_data = {"accel": accel, "timestamp": time.time()}
+
             # しきい値を超えた場合に振ったとみなす
-            threshold = 3000
+            threshold = 7000
             if accel_change_x > threshold or accel_change_y > threshold or accel_change_z > threshold:
                 scoreJoy += 10  # 得点を加算
                 print(f"Joy-Conを振りました！得点: {scoreJoy}")
@@ -45,12 +53,6 @@ def Joycon(BPM):
                 count += 1
                 elapsed_time = (datetime.now() - start_time).total_seconds()  # 経過秒数
                 data = {
-                    'accel_change_x': accel_change_x,
-                    'accel_change_y': accel_change_y,
-                    'accel_change_z': accel_change_z,
-                    'gyro_x': status['gyro']['x'],
-                    'gyro_y': status['gyro']['y'],
-                    'gyro_z': status['gyro']['z'],
                     'soundTimer': soundTimer  # 経過時間
                 }
                 print(f"データ {count}: {data}")
@@ -78,5 +80,3 @@ def Joycon(BPM):
 
     except Exception as e:
         print(f"エラーが発生しました: {e}")
-
-# Joycon(72)
