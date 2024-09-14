@@ -13,14 +13,14 @@ def get_pose_landmarks():
         landmarks_data = json.load(file)
     return jsonify(landmarks=landmarks_data)
 
-# Poseデータを受け取るエンドポイント
-@app.route('/pose-data', methods=['POST'])
-def pose_data():
-    data = request.json
-    # ここで受け取ったポーズデータを処理する
-    print("Received pose data:", data)
-    # 例としてスコアを固定値で返す
-    return jsonify(score=100)
+# # Poseデータを受け取るエンドポイント
+# @app.route('/pose-data', methods=['POST'])
+# def pose_data():
+#     data = request.json
+#     # ここで受け取ったポーズデータを処理する
+#     print("Received pose data:", data)
+#     # 例としてスコアを固定値で返す
+#     return jsonify(score=100)
 
 # メインエンドポイント
 @app.route('/')
