@@ -13,6 +13,19 @@
 
 <body>
     <h1>Dance Game</h1>
+    <div>
+        <label for="camera-select">Select Camera:</label>
+        <select id="camera-select"></select>
+    </div>
+
+    <!-- スコア表示 -->
+    <div>
+        <h2>Score: <span id="score">0</span></h2>
+    </div>
+    <!-- 類似度表示 -->
+    <div>
+        <h2>Similarity: <span id="similarity">0</span></h2>
+    </div>
 
     <!-- スタートボタン -->
     <button id="start-button">Start</button>
@@ -21,7 +34,7 @@
         <!-- 左側の動画 -->
         <div style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%" muted>
+            <video id="sample-video" width="100%">
                 <source src="{{ url_for('static', filename='video/sample_15s.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -37,10 +50,6 @@
         </div>
     </div>
 
-    <!-- スコア表示 -->
-    <div>
-        <h2>Score: <span id="score">0</span></h2>
-    </div>
 
     <script>
         // HTML要素の取得
@@ -50,6 +59,9 @@
         const startButton = document.getElementById('start-button');
         let isStarted = false;
         let savedLandmarks = [];
+
+        var player_landmarks;
+        var totalScore = 0;
 
         // 再生前にお手本動画の骨格ランドマークをサーバーから取得して保存
         async function fetchPoseLandmarks() {
@@ -68,6 +80,37 @@
             }
         });
 
+        function onResults(results) {
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+
+            canvasElement.width = videoWidth;
+            canvasElement.height = videoHeight;
+
+            canvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+            // 反転処理を追加
+            canvasCtx.save();
+            canvasCtx.translate(videoWidth, 0);
+            canvasCtx.scale(-1, 1);
+            canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
+            canvasCtx.restore();
+            player_landmarks = results.poseLandmarks;
+            console.log(player_landmarks);
+            if (player_landmarks) {
+                for (let landmark of player_landmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    canvasCtx.fillStyle = 'rgb(0,255,0)';  // 緑色
+                    canvasCtx.fill();
+                    canvasCtx.stroke();
+                }
+            }
+
+            //sendPoseData(player_landmarks);
+        }
+
         // 保存されたランドマークを動画の上に描画する関数
         function drawSavedLandmarks() {
             const videoWidth = sampleVideoElement.videoWidth;
@@ -77,7 +120,7 @@
 
             // 現在のフレームに対応するランドマークデータを取得
             const currentTime = sampleVideoElement.currentTime;
-            const fps = 10;  // 保存したランドマークのFPSに合わせる
+            const fps = 30;  // 保存したランドマークのFPSに合わせる
             const currentFrame = Math.floor(currentTime * fps);  // 10fpsでフレーム数を計算
 
             console.log('Current frame:', currentFrame);
@@ -87,6 +130,10 @@
                 sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
 
                 const landmarks = savedLandmarks[currentFrame];
+
+                //スコア更新する
+                Comparison_Calculation(landmarks, player_landmarks);
+
                 for (let landmark of landmarks) {
                     const x = landmark.x * videoWidth;
                     const y = landmark.y * videoHeight;
@@ -110,30 +157,7 @@
         const canvasElement = document.getElementById('output-canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-        function onResults(results) {
-            const videoWidth = videoElement.videoWidth;
-            const videoHeight = videoElement.videoHeight;
 
-            canvasElement.width = videoWidth;
-            canvasElement.height = videoHeight;
-
-            canvasCtx.clearRect(0, 0, videoWidth, videoHeight);
-            canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
-
-            if (results.poseLandmarks) {
-                for (let landmark of results.poseLandmarks) {
-                    const x = landmark.x * videoWidth;
-                    const y = landmark.y * videoHeight;
-                    canvasCtx.beginPath();
-                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                    canvasCtx.fillStyle = 'rgb(0,255,0)';  // 緑色
-                    canvasCtx.fill();
-                    canvasCtx.stroke();
-                }
-            }
-
-            sendPoseData(results.poseLandmarks);
-        }
 
         // MediaPipe Poseの初期化
         const pose = new Pose({
@@ -159,34 +183,151 @@
         });
         camera.start();
 
-        // Poseデータをサーバーに送信
-        function sendPoseData(poseLandmarks) {
-            const poseData = poseLandmarks.map(landmark => ({
-                x: landmark.x,
-                y: landmark.y
-            }));
+        // // Poseデータをサーバーに送信
+        // function sendPoseData(poseLandmarks) {
+        //     const poseData = poseLandmarks.map(landmark => ({
+        //         x: landmark.x,
+        //         y: landmark.y
+        //     }));
 
-            fetch('/pose-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ joints: poseData }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Success:', data);
-                    updateScore(data.score);
-                })
-                .catch(error => console.error('Error:', error));
+        //     fetch('/pose-data', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //         },
+        //         body: JSON.stringify({ joints: poseData }),
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             console.log('Success:', data);
+        //             updateScore(data.score);
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        // }
+
+        //スコアを加算
+        function addScore(point) {
+            totalScore += point;
+            updateScore(totalScore);
+            console.log(totalScore);
         }
 
         // スコアを更新する関数
         function updateScore(score) {
             document.getElementById('score').innerText = score;
         }
+        // 類似度を更新する関数
+        function updateSimilarity(similarity) {
+            document.getElementById('similarity').innerText = similarity;
+        }
 
-        fetchPoseLandmarks();  // ページ読み込み時にランドマークを取得
+
+        fetchPoseLandmarks();  // ページ読み込み時にンドマークを取得
+
+        const cameraSelect = document.getElementById('camera-select');
+
+        // カメラデバイスの取得と選択肢の設定
+        async function initializeCameraSelection() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            videoDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${cameraSelect.options.length + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // デフォルトのカメラを選択
+            if (videoDevices.length > 0) {
+                cameraSelect.value = videoDevices[0].deviceId;
+            }
+        }
+
+        initializeCameraSelection();
+
+        // カメラの変更時にカメラを再設定する
+        cameraSelect.addEventListener('change', () => {
+            startCamera(cameraSelect.value);
+        });
+
+        // カメラを開始する関数
+        function startCamera(deviceId) {
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await pose.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480,
+                deviceId: deviceId
+            });
+            camera.start();
+        }
+
+        // 初期カメラ設定
+        startCamera(cameraSelect.value);
+
+        //二つのランドマークからスコアを出す
+        function Comparison_Calculation(landmarks1, landmarks2) {
+            //相対座標に変換
+            R_landmarks1 = getRelativeLandmarks(landmarks1);
+            R_landmarks2 = getRelativeLandmarks(landmarks2);
+
+            //類似度を算出
+            similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
+            updateSimilarity(similarity);
+
+            //類似度をもとにスコアを加算
+            addScore(similarity * 10)
+        }
+
+        function getRelativeLandmarks(landmarks) {
+            if (!landmarks || landmarks.length === 0) {
+                console.error("ランドマークが正しく取得されていません");
+                return [];  // エラー回避のために空の配列を返す
+            }
+
+            const baseLandmark = landmarks[12];  // 基準座標
+            return landmarks.map(landmark => ({
+                x: landmark.x - baseLandmark.x,
+                y: landmark.y - baseLandmark.y,
+            }));
+        }
+
+        function calculateCosineSimilarity(landmarks1, landmarks2) {
+            let dotProduct = 0;
+            let norm1 = 0;
+            let norm2 = 0;
+
+            for (let i = 0; i < landmarks1.length; i++) {
+                const x1 = landmarks1[i].x;
+                const y1 = landmarks1[i].y;
+                const x2 = landmarks2[i].x;
+                const y2 = landmarks2[i].y;
+
+                dotProduct += (x1 * x2) + (y1 * y2);
+                norm1 += (x1 * x1) + (y1 * y1);
+                norm2 += (x2 * x2) + (y2 * y2);
+            }
+
+            //値が高すぎたので0.8引いて5をかけた
+            return (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
+        }
+
+        // function updateScoreWithSimilarity(currentLandmarks, savedLandmarks) {
+        //     const relativeCurrent = getRelativeLandmarks(currentLandmarks);
+        //     const relativeSaved = getRelativeLandmarks(savedLandmarks);
+
+        //     const similarity = calculateCosineSimilarity(relativeCurrent, relativeSaved);
+
+        //     let score = 0;
+        //     if (similarity > 0.9) {  // 類似度が90%以上の場合にスコアを加算
+        //         score += Math.floor(similarity * 100);  // 類似度を元にスコア加算
+        //     }
+
+        //     updateScore(score);
+        // }
+
     </script>
 </body>
 
