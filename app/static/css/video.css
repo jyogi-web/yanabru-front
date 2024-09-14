@@ -1,13 +1,29 @@
 video,
 canvas {
     display: block;
-    width: 100%;
-    height: auto;
-    /* 高さも100%に設定 */
     position: absolute;
-    /* positionをabsoluteに設定 */
+}
+
+.movie video,
+.movie canvas {
+    width: 1085px;
+    height: auto;
     top: 0;
-    /* 上に固定 */
     left: 0;
-    /* 左に固定 */
+    position: absolute;
+}
+
+.camera video,
+.camera canvas {
+    width: 400px;
+    height: auto;
+    bottom: 1;
+    right: 0;
+    position: absolute;
+}
+
+button {
+    width: 30em;
+    height: 5em;
+    margin-left: 200px;
 }

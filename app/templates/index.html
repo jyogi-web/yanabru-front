@@ -18,35 +18,44 @@
         <select id="camera-select"></select>
     </div>
 
-    <!-- スコア表示 -->
-    <div>
-        <h2>Score: <span id="score">0</span></h2>
-    </div>
-    <!-- 類似度表示 -->
-    <div>
-        <h2>Similarity: <span id="similarity">0</span></h2>
-    </div>
+    <table>
+        <td>
+            <!-- スコア表示 -->
+            <div>
+                <h2>Score: <span id="score">0</span></h2>
+            </div>
+            <!-- 類似度表示 -->
+            <div>
+                <h2>Similarity: <span id="similarity">0</span></h2>
+            </div>
+        </td>
+        <td>
+            <!-- スタートボタン -->
+            <button id="start-button">Start</button>
+        </td>
+    </table>
 
-    <!-- スタートボタン -->
-    <button id="start-button">Start</button>
+
+
 
     <div style="display: flex;">
         <!-- 左側の動画 -->
-        <div style="flex: 1; position: relative;">
+        <div class="movie" style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%">
-                <source src="{{ url_for('static', filename='video/sample_15s.mp4') }}" type="video/mp4">
+            <video id="sample-video">
+                <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
+                    type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <!-- 骨格ランドマークを描画するCanvas -->
-            <canvas id="sample-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+            <canvas id="sample-canvas" style="position: absolute;"></canvas>
         </div>
 
         <!-- 右側のカメラ映像 -->
-        <div style="flex: 1; position: relative;">
+        <div class="camera" style="flex: 1;position:relative;">
             <h2>Live Camera Feed</h2>
-            <video id="live-video" width="100%" autoplay></video>
-            <canvas id="output-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+            <video id="live-video" autoplay></video>
+            <canvas id="output-canvas"></canvas>
         </div>
     </div>
 
@@ -121,7 +130,7 @@
             // 現在のフレームに対応するランドマークデータを取得
             const currentTime = sampleVideoElement.currentTime;
             const fps = 30;  // 保存したランドマークのFPSに合わせる
-            const currentFrame = Math.floor(currentTime * fps);  // 10fpsでフレーム数を計算
+            const currentFrame = Math.floor(currentTime * fps);  // 指定のfpsでフレーム数を計算
 
             console.log('Current frame:', currentFrame);
 
@@ -269,18 +278,31 @@
 
         //二つのランドマークからスコアを出す
         function Comparison_Calculation(landmarks1, landmarks2) {
-            //相対座標に変換
-            R_landmarks1 = getRelativeLandmarks(landmarks1);
-            R_landmarks2 = getRelativeLandmarks(landmarks2);
+            //全身が映っているか
+            isFull = isFullBodyVisible(landmarks2);
+            //映っているなら類似度を出す
+            if (isFull) {
+                //相対座標に変換
+                R_landmarks1 = getRelativeLandmarks(landmarks1);
+                R_landmarks2 = getRelativeLandmarks(landmarks2);
 
-            //類似度を算出
-            similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
-            updateSimilarity(similarity);
+                //類似度を算出
+                similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
+                updateSimilarity(similarity);
 
-            //類似度をもとにスコアを加算
-            if (similarity > 0.7) {
-                addScore(similarity * 10)
+                //類似度をもとにスコアを加算
+                if (similarity > 0.8) {
+                    addScore(Math.round(similarity * 10));
+                }
+                else if (similarity < 0.3) {
+                    addScore(Math.round(-(1 - similarity)));
+                }
             }
+            else {
+                similarity = 0;
+                addScore(-1);
+            }
+
         }
 
         function getRelativeLandmarks(landmarks) {
@@ -315,6 +337,20 @@
             //値が高すぎたので0.8引いて5をかけた
             return (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
         }
+
+        function isFullBodyVisible(landmarks) {
+            // チェックしたいランドマークのインデックス
+            const REQUIRED_LANDMARKS = [
+                11, 12,  // 左肩, 右肩
+                23, 24,  // 左腰, 右腰
+                27, 28,  // 左膝, 右膝
+                31, 32   // 左足先, 右足先
+            ];
+
+            // 全てのランドマークが存在するか確認
+            return REQUIRED_LANDMARKS.every(index => landmarks[index] && landmarks[index].visibility > 0.5);
+        }
+
 
         // function updateScoreWithSimilarity(currentLandmarks, savedLandmarks) {
         //     const relativeCurrent = getRelativeLandmarks(currentLandmarks);
