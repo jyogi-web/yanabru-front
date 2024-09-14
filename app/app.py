@@ -1,4 +1,4 @@
-from flask import Flask,render_template,Response,request,jsonify
+from flask import Flask, render_template, Response, request, jsonify
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -16,7 +16,7 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 
 # お手本動画の読み込み
-video_path = '/static/video/エイサー_島人ぬ宝.mp4'
+video_path = '/static/video/sample_15s.mp4'
 cap = cv2.VideoCapture(video_path)
 
 def generate_frames():
@@ -40,21 +40,16 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-
 # Joy-Conのデータ取得を並行して動作させるためのスレッド処理
 def run_joycon():
     Joycon(72)
 
-# Joy-Conのデータ取得をスレッドで開始
-joycon_thread = threading.Thread(target=run_joycon)
-joycon_thread.start()
-
-
-
-
-# ルートエンドポイント
 @app.route('/video')
 def video():
+    # Joy-Conのデータ取得をスレッドで開始
+    joycon_thread = threading.Thread(target=run_joycon)
+    joycon_thread.start()
+    
     return render_template('video.html')
 
 # ビデオフィードエンドポイント
@@ -67,20 +62,16 @@ def video_feed():
 def pose_data():
     data = request.json
     joints = data.get('joints', [])
-    # カメラのデータ
     print(joints)
-    # お手本のポーズと比較してスコアを計算
-    # 仮のデータとしてお手本の骨格を定義
+    
     reference_pose = [{'x': 0.5, 'y': 0.5}, {'x': 0.6, 'y': 0.6}]  # 例として使用
-
-    # 類似度を計算（ユークリッド距離）
     score = calculate_similarity(reference_pose, joints)
     return jsonify(score=score)
 
 # スコアを計算する関数
 def calculate_similarity(pose1, pose2):
     if len(pose1) != len(pose2):
-        return 0  # データ数が一致しない場合はスコア0
+        return 0
 
     distances = [np.linalg.norm(np.array([p1['x'], p1['y']]) - np.array([p2['x'], p2['y']])) for p1, p2 in zip(pose1, pose2)]
-    return 100 - np.mean(distances) * 100  # 距離に基づいてスコアを100点満点で計算
+    return 100 - np.mean(distances) * 100
