@@ -278,7 +278,9 @@
             updateSimilarity(similarity);
 
             //類似度をもとにスコアを加算
-            addScore(similarity * 10)
+            if (similarity > 0.7) {
+                addScore(similarity * 10)
+            }
         }
 
         function getRelativeLandmarks(landmarks) {
