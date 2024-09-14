@@ -4,7 +4,7 @@ import json
 app = Flask(__name__)
 
 # ランドマークデータの保存先
-landmarks_file = 'app/static/landmarks/sample_landmarks(30fps).json'
+landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
 
 # ランドマークデータを提供するエンドポイント
 @app.route('/get-pose-landmarks', methods=['GET'])
