@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{url_for('static',filename='css/video.css')}}" rel="stylesheet" />
     <title>Dance Game</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -14,19 +15,21 @@
     <h1>Dance Game</h1>
     <div style="display: flex;">
         <!-- 左側の動画 -->
-        <div style="flex: 1;">
+        <div style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
             <video id="sample-video" width="100%" controls>
                 <source src="{{ url_for('static', filename='video/エイサー_島人ぬ宝.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
+            <!-- 骨格ランドマークを描画するCanvas -->
+            <canvas id="sample-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
         </div>
 
         <!-- 右側のカメラ映像 -->
-        <div style="flex: 1;">
+        <div style="flex: 1;position:relative">
             <h2>Live Camera Feed</h2>
             <video id="live-video" width="100%" autoplay></video>
-            <canvas id="output-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+            <canvas id="output-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
         </div>
     </div>
 
@@ -36,40 +39,98 @@
     </div>
 
     <script>
+        // お手本動画用の要素を取得
+        const sampleVideoElement = document.getElementById('sample-video');
+        const sampleCanvasElement = document.getElementById('sample-canvas');
+        const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
+
+        function onSampleResults(results) {
+            // 動画のサイズがロード後に確定するのを待つ
+            const videoWidth = sampleVideoElement.videoWidth;
+            const videoHeight = sampleVideoElement.videoHeight;
+
+            if (videoWidth > 0 && videoHeight > 0) {
+                // Canvasのサイズを動画と合わせる
+                sampleCanvasElement.width = videoWidth;
+                sampleCanvasElement.height = videoHeight;
+
+                // Canvasにお手本動画を描画
+                sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+                sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
+
+                // 骨格ランドマークを描画
+                if (results.poseLandmarks) {
+                    sampleCanvasCtx.strokeStyle = 'rgb(255,0,0)';
+                    sampleCanvasCtx.lineWidth = 2;
+                    for (let landmark of results.poseLandmarks) {
+                        const x = landmark.x * videoWidth;
+                        const y = landmark.y * videoHeight;
+                        sampleCanvasCtx.beginPath();
+                        sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                        sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
+                        sampleCanvasCtx.fill();
+                        sampleCanvasCtx.stroke();
+                    }
+                }
+            }
+        }
+
+        const samplePose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+        samplePose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        samplePose.onResults(onSampleResults);
+
+        sampleVideoElement.addEventListener('play', () => {
+            function analyzeSampleVideoFrame() {
+                if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
+                    samplePose.send({ image: sampleVideoElement });
+                    requestAnimationFrame(analyzeSampleVideoFrame);
+                }
+            }
+            analyzeSampleVideoFrame();
+        });
+
         // カメラ映像の取得
         const videoElement = document.getElementById('live-video');
         const canvasElement = document.getElementById('output-canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
         function onResults(results) {
-            // Canvasのサイズをカメラ映像に合わせる
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
+
+            // Canvasのサイズをカメラ映像に合わせる
             canvasElement.width = videoWidth;
             canvasElement.height = videoHeight;
 
-
             // Canvasにカメラ映像を描画
-            canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
 
             // 骨格ランドマークを描画
             if (results.poseLandmarks) {
+                canvasCtx.strokeStyle = 'rgb(0,255,0)';
+                canvasCtx.lineWidth = 2;
                 for (let landmark of results.poseLandmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
                     canvasCtx.beginPath();
-                    canvasCtx.arc(landmark.x * canvasElement.width, landmark.y * canvasElement.height, 5, 0, 2 * Math.PI);
+                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
                     canvasCtx.fillStyle = 'rgb(0,255,0)';
                     canvasCtx.fill();
+                    canvasCtx.stroke();
                 }
             }
-            canvasCtx.restore();
 
             // 骨格データをサーバーに送信
             sendPoseData(results.poseLandmarks);
         }
 
-        // MediaPipe Poseのセットアップ
         const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
         pose.setOptions({
             modelComplexity: 1,
@@ -81,7 +142,6 @@
 
         pose.onResults(onResults);
 
-        // カメラ映像をCanvasにストリーム
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await pose.send({ image: videoElement });
@@ -91,7 +151,6 @@
         });
         camera.start();
 
-        // 骨格データをサーバーに送信する関数
         function sendPoseData(poseLandmarks) {
             const poseData = poseLandmarks.map(landmark => ({
                 x: landmark.x,
@@ -113,7 +172,6 @@
                 .catch((error) => console.error('Error:', error));
         }
 
-        // スコア更新用関数
         function updateScore(score) {
             document.getElementById('score').innerText = score;
         }

@@ -1,4 +1,4 @@
-from flask import Flask,render_template,Response,request,jsonify
+from flask import Flask, render_template, Response, request, jsonify
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -14,14 +14,15 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 
 # お手本動画の読み込み
-video_path = '/static/video/エイサー_島人ぬ宝.mp4'
+video_path = './static/video/エイサー_島人ぬ宝.mp4'
 cap = cv2.VideoCapture(video_path)
 
 def generate_frames():
     while True:
         success, frame = cap.read()
         if not success:
-            break
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 動画が終わったら最初に戻る
+            continue
 
         # 骨格検出を行う
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -29,7 +30,13 @@ def generate_frames():
 
         # 骨格の描画
         if results.pose_landmarks:
-            mp.solutions.drawing_utils.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+            mp.solutions.drawing_utils.draw_landmarks(
+                frame, 
+                results.pose_landmarks, 
+                mp_pose.POSE_CONNECTIONS,
+                landmark_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=2),
+                connection_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(color=(255,0,0), thickness=2)
+            )
 
         # フレームをJPEG形式にエンコードして送信
         ret, buffer = cv2.imencode('.jpg', frame)
@@ -69,3 +76,6 @@ def calculate_similarity(pose1, pose2):
 
     distances = [np.linalg.norm(np.array([p1['x'], p1['y']]) - np.array([p2['x'], p2['y']])) for p1, p2 in zip(pose1, pose2)]
     return 100 - np.mean(distances) * 100  # 距離に基づいてスコアを100点満点で計算
+
+if __name__ == '__main__':
+    app.run(debug=True)
