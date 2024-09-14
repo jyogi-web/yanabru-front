@@ -13,7 +13,10 @@
 
 <body>
     <h1>Dance Game</h1>
-
+    <div>
+        <label for="camera-select">Select Camera:</label>
+        <select id="camera-select"></select>
+    </div>
     <!-- スタートボタン -->
     <button id="start-button">Start</button>
 
@@ -21,7 +24,7 @@
         <!-- 左側の動画 -->
         <div style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%" muted>
+            <video id="sample-video" width="100%">
                 <source src="{{ url_for('static', filename='video/sample_15s.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -77,7 +80,7 @@
 
             // 現在のフレームに対応するランドマークデータを取得
             const currentTime = sampleVideoElement.currentTime;
-            const fps = 10;  // 保存したランドマークのFPSに合わせる
+            const fps = 30;  // 保存したランドマークのFPSに合わせる
             const currentFrame = Math.floor(currentTime * fps);  // 10fpsでフレーム数を計算
 
             console.log('Current frame:', currentFrame);
@@ -118,7 +121,12 @@
             canvasElement.height = videoHeight;
 
             canvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+            // 反転処理を追加
+            canvasCtx.save();
+            canvasCtx.translate(videoWidth, 0);
+            canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
+            canvasCtx.restore();
 
             if (results.poseLandmarks) {
                 for (let landmark of results.poseLandmarks) {
@@ -187,6 +195,50 @@
         }
 
         fetchPoseLandmarks();  // ページ読み込み時にランドマークを取得
+
+        const cameraSelect = document.getElementById('camera-select');
+
+        // カメラデバイスの取得と選択肢の設定
+        async function initializeCameraSelection() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            videoDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${cameraSelect.options.length + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // デフォルトのカメラを選択
+            if (videoDevices.length > 0) {
+                cameraSelect.value = videoDevices[0].deviceId;
+            }
+        }
+
+        initializeCameraSelection();
+
+        // カメラの変更時にカメラを再設定する
+        cameraSelect.addEventListener('change', () => {
+            startCamera(cameraSelect.value);
+        });
+
+        // カメラを開始する関数
+        function startCamera(deviceId) {
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await pose.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480,
+                deviceId: deviceId
+            });
+            camera.start();
+        }
+
+        // 初期カメラ設定
+        startCamera(cameraSelect.value);
+
     </script>
 </body>
 
