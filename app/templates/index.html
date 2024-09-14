@@ -1,13 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{url_for('static',filename='css/video.css')}}" rel="stylesheet" />
+    <title>Dance Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 </head>
 
 <body>
-    <h1>test_Page</h1>
-    <a href="/video">video</a>
+    <h1>Dance Game</h1>
+
+    <!-- スタートボタン -->
+    <button id="start-button">Start</button>
+
+    <div style="display: flex;">
+        <!-- 左側の動画 -->
+        <div style="flex: 1; position: relative;">
+            <h2>Sample Video</h2>
+            <video id="sample-video" width="100%">
+                <source src="{{ url_for('static', filename='video/sample_15s.mp4') }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <!-- 骨格ランドマークを描画するCanvas -->
+            <canvas id="sample-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+        </div>
+
+        <!-- 右側のカメラ映像 -->
+        <div style="flex: 1; position: relative;">
+            <h2>Live Camera Feed</h2>
+            <video id="live-video" width="100%" autoplay></video>
+            <canvas id="output-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+        </div>
+    </div>
+
+    <!-- スコア表示 -->
+    <div>
+        <h2>Score: <span id="score">0</span></h2>
+    </div>
+
+    <script>
+        const sampleVideoElement = document.getElementById('sample-video');
+        const sampleCanvasElement = document.getElementById('sample-canvas');
+        const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
+        const startButton = document.getElementById('start-button');
+        let isStarted = false;
+        let savedLandmarks = [];
+
+        // 再生前にお手本動画の骨格ランドマークをサーバーから取得して保存
+        async function fetchPoseLandmarks() {
+            const response = await fetch('/get-pose-landmarks');
+            const data = await response.json();
+            savedLandmarks = data.landmarks;
+        }
+
+        // スタートボタンを押したときの処理
+        startButton.addEventListener('click', () => {
+            if (!isStarted) {
+                sampleVideoElement.play();
+                requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
+                isStarted = true;
+            }
+        });
+
+        // 保存されたランドマークを動画の上に描画する関数
+        function drawSavedLandmarks() {
+            const videoWidth = sampleVideoElement.videoWidth;
+            const videoHeight = sampleVideoElement.videoHeight;
+            sampleCanvasElement.width = videoWidth;
+            sampleCanvasElement.height = videoHeight;
+
+            const currentFrame = Math.floor(sampleVideoElement.currentTime * 30);  // 30fpsでフレーム数を計算
+            if (savedLandmarks[currentFrame]) {
+                sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+                sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
+
+                const landmarks = savedLandmarks[currentFrame];
+                for (let landmark of landmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
+                    sampleCanvasCtx.beginPath();
+                    sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
+                    sampleCanvasCtx.fill();
+                    sampleCanvasCtx.stroke();
+                }
+            }
+
+            if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
+                requestAnimationFrame(drawSavedLandmarks);
+            }
+        }
+
+        // カメラ映像の取得と処理
+        const videoElement = document.getElementById('live-video');
+        const canvasElement = document.getElementById('output-canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        function onResults(results) {
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+
+            canvasElement.width = videoWidth;
+            canvasElement.height = videoHeight;
+
+            canvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+            canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
+
+            if (results.poseLandmarks) {
+                for (let landmark of results.poseLandmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    canvasCtx.fillStyle = 'rgb(0,255,0)';
+                    canvasCtx.fill();
+                    canvasCtx.stroke();
+                }
+            }
+
+            sendPoseData(results.poseLandmarks);
+        }
+
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        pose.onResults(onResults);
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await pose.send({ image: videoElement });
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        function sendPoseData(poseLandmarks) {
+            const poseData = poseLandmarks.map(landmark => ({
+                x: landmark.x,
+                y: landmark.y
+            }));
+
+            fetch('/pose-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ joints: poseData }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    updateScore(data.score);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateScore(score) {
+            document.getElementById('score').innerText = score;
+        }
+
+        fetchPoseLandmarks();  // ページ読み込み時にランドマークを取得
+    </script>
 </body>
 
 </html>

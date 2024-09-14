@@ -1,0 +1,13 @@
+video,
+canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    /* 高さも100%に設定 */
+    position: absolute;
+    /* positionをabsoluteに設定 */
+    top: 0;
+    /* 上に固定 */
+    left: 0;
+    /* 左に固定 */
+}
