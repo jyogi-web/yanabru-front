@@ -35,9 +35,6 @@
         </td>
     </table>
 
-
-
-
     <div style="display: flex;">
         <!-- 左側の動画 -->
         <div class="movie" style="flex: 1; position: relative;">
@@ -103,12 +100,17 @@
             canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
             canvasCtx.restore();
-            player_landmarks = results.poseLandmarks;
-            console.log(player_landmarks);
-            if (player_landmarks) {
-                for (let landmark of player_landmarks) {
+
+            if (results.poseLandmarks) {
+                // ランドマークの左右反転処理
+                const mirroredLandmarks = mirrorLandmarks(results.poseLandmarks, videoWidth);
+                player_landmarks = mirroredLandmarks;  // 鏡像のランドマークを取得
+
+                // 反転したカメラ映像に基づいてランドマークを描画
+                for (let landmark of mirroredLandmarks) {
                     const x = landmark.x * videoWidth;
                     const y = landmark.y * videoHeight;
+
                     canvasCtx.beginPath();
                     canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
                     canvasCtx.fillStyle = 'rgb(0,255,0)';  // 緑色
@@ -118,6 +120,30 @@
             }
 
             //sendPoseData(player_landmarks);
+        }
+
+        // ランドマークを左右反転させる関数
+        function mirrorLandmarks(landmarks, videoWidth) {
+            const mirroredLandmarks = landmarks.map(landmark => {
+                return {
+                    ...landmark,
+                    x: 1 - landmark.x  // x座標を反転
+                };
+            });
+
+            // 左右のランドマークを交換（例えば、右手と左手を入れ替える）
+            const swapIndices = [
+                [11, 12], [13, 14], [15, 16],  // 肩、肘、手首
+                [23, 24], [25, 26], [27, 28],  // 腰、膝、足首
+            ];
+
+            swapIndices.forEach(([left, right]) => {
+                const temp = mirroredLandmarks[left];
+                mirroredLandmarks[left] = mirroredLandmarks[right];
+                mirroredLandmarks[right] = temp;
+            });
+
+            return mirroredLandmarks;
         }
 
         // 保存されたランドマークを動画の上に描画する関数
