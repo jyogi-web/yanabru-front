@@ -9,7 +9,7 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 
 # 見本動画から骨格ランドマークを抽出し、保存
-def extract_and_save_landmarks(video_path, save_path, target_fps=10):
+def extract_and_save_landmarks(video_path, save_path, target_fps=30):
     cap = cv2.VideoCapture(video_path)
     landmarks_data = []
     
