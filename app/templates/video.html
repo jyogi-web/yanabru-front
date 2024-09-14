@@ -13,11 +13,15 @@
 
 <body>
     <h1>Dance Game</h1>
+
+    <!-- スタートボタン -->
+    <button id="start-button">Start</button>
+
     <div style="display: flex;">
         <!-- 左側の動画 -->
         <div style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%" controls>
+            <video id="sample-video" width="100%">
                 <source src="{{ url_for('static', filename='video/エイサー_島人ぬ宝.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -26,7 +30,7 @@
         </div>
 
         <!-- 右側のカメラ映像 -->
-        <div style="flex: 1;position:relative">
+        <div style="flex: 1; position: relative;">
             <h2>Live Camera Feed</h2>
             <video id="live-video" width="100%" autoplay></video>
             <canvas id="output-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
@@ -43,57 +47,70 @@
         const sampleVideoElement = document.getElementById('sample-video');
         const sampleCanvasElement = document.getElementById('sample-canvas');
         const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
+        const startButton = document.getElementById('start-button');
+        let isStarted = false;
 
-        function onSampleResults(results) {
-            // 動画のサイズがロード後に確定するのを待つ
-            const videoWidth = sampleVideoElement.videoWidth;
-            const videoHeight = sampleVideoElement.videoHeight;
+        // ボタンが押されたら再生とランドマーク取得を開始
+        startButton.addEventListener('click', () => {
+            if (!isStarted) {
+                // 動画の再生を開始
+                sampleVideoElement.play();
+                // 動画のフレームごとにポーズデータを解析
+                analyzeSampleVideoFrame();
+                isStarted = true;
+            }
+        });
 
-            if (videoWidth > 0 && videoHeight > 0) {
-                // Canvasのサイズを動画と合わせる
-                sampleCanvasElement.width = videoWidth;
-                sampleCanvasElement.height = videoHeight;
+        function analyzeSampleVideoFrame() {
+            function onSampleResults(results) {
+                const videoWidth = sampleVideoElement.videoWidth;
+                const videoHeight = sampleVideoElement.videoHeight;
 
-                // Canvasにお手本動画を描画
-                sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
-                sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
+                if (videoWidth > 0 && videoHeight > 0) {
+                    // Canvasのサイズを動画と合わせる
+                    sampleCanvasElement.width = videoWidth;
+                    sampleCanvasElement.height = videoHeight;
 
-                // 骨格ランドマークを描画
-                if (results.poseLandmarks) {
-                    sampleCanvasCtx.strokeStyle = 'rgb(255,0,0)';
-                    sampleCanvasCtx.lineWidth = 2;
-                    for (let landmark of results.poseLandmarks) {
-                        const x = landmark.x * videoWidth;
-                        const y = landmark.y * videoHeight;
-                        sampleCanvasCtx.beginPath();
-                        sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                        sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
-                        sampleCanvasCtx.fill();
-                        sampleCanvasCtx.stroke();
+                    // Canvasにお手本動画を描画
+                    sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+                    sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
+
+                    // 骨格ランドマークを描画
+                    if (results.poseLandmarks) {
+                        sampleCanvasCtx.strokeStyle = 'rgb(255,0,0)';
+                        sampleCanvasCtx.lineWidth = 2;
+                        for (let landmark of results.poseLandmarks) {
+                            const x = landmark.x * videoWidth;
+                            const y = landmark.y * videoHeight;
+                            sampleCanvasCtx.beginPath();
+                            sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                            sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
+                            sampleCanvasCtx.fill();
+                            sampleCanvasCtx.stroke();
+                        }
                     }
                 }
             }
-        }
 
-        const samplePose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
-        samplePose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-        samplePose.onResults(onSampleResults);
+            const samplePose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+            samplePose.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                enableSegmentation: false,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            samplePose.onResults(onSampleResults);
 
-        sampleVideoElement.addEventListener('play', () => {
-            function analyzeSampleVideoFrame() {
+            // 動画が再生中ならフレームを解析
+            function analyzeFrame() {
                 if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
                     samplePose.send({ image: sampleVideoElement });
-                    requestAnimationFrame(analyzeSampleVideoFrame);
+                    requestAnimationFrame(analyzeFrame);
                 }
             }
-            analyzeSampleVideoFrame();
-        });
+            analyzeFrame();
+        }
 
         // カメラ映像の取得
         const videoElement = document.getElementById('live-video');
