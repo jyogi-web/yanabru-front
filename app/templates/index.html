@@ -18,36 +18,44 @@
         <select id="camera-select"></select>
     </div>
 
-    <!-- スコア表示 -->
-    <div>
-        <h2>Score: <span id="score">0</span></h2>
-    </div>
-    <!-- 類似度表示 -->
-    <div>
-        <h2>Similarity: <span id="similarity">0</span></h2>
-    </div>
+    <table>
+        <td>
+            <!-- スコア表示 -->
+            <div>
+                <h2>Score: <span id="score">0</span></h2>
+            </div>
+            <!-- 類似度表示 -->
+            <div>
+                <h2>Similarity: <span id="similarity">0</span></h2>
+            </div>
+        </td>
+        <td>
+            <!-- スタートボタン -->
+            <button id="start-button">Start</button>
+        </td>
+    </table>
 
-    <!-- スタートボタン -->
-    <button id="start-button">Start</button>
+
+
 
     <div style="display: flex;">
         <!-- 左側の動画 -->
-        <div style="flex: 1; position: relative;">
+        <div class="movie" style="flex: 1; position: relative;">
             <h2>Sample Video</h2>
-            <video id="sample-video" width="100%">
+            <video id="sample-video">
                 <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
                     type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <!-- 骨格ランドマークを描画するCanvas -->
-            <canvas id="sample-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+            <canvas id="sample-canvas" style="position: absolute;"></canvas>
         </div>
 
         <!-- 右側のカメラ映像 -->
-        <div style="flex: 1; position: relative;">
+        <div class="camera" style="flex: 1;position:relative;">
             <h2>Live Camera Feed</h2>
-            <video id="live-video" width="100%" autoplay></video>
-            <canvas id="output-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+            <video id="live-video" autoplay></video>
+            <canvas id="output-canvas"></canvas>
         </div>
     </div>
 
@@ -284,15 +292,15 @@
 
                 //類似度をもとにスコアを加算
                 if (similarity > 0.8) {
-                    addScore(similarity);
+                    addScore(Math.round(similarity * 10));
                 }
                 else if (similarity < 0.3) {
-                    addScore(-(1 - similarity));
+                    addScore(Math.round(-(1 - similarity)));
                 }
             }
             else {
                 similarity = 0;
-                addScore(-0.1);
+                addScore(-1);
             }
 
         }
