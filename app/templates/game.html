@@ -443,7 +443,7 @@
         // }
 
         const fetchReactScore = () => {
-            fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/get-score')
+            fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/submit-score')
                 .then(response => response.json())
                 .then(data => {
                     const totalScore = data.score;
@@ -461,7 +461,7 @@
 
 
         // 0.1秒ごとにスコアを取得して更新
-        setInterval(fetchScore, 100);
+        // setInterval(fetchScore, 100);
         setInterval(fetchReactScore, 100);
     </script>
 </body>
