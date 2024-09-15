@@ -73,6 +73,13 @@ def get_score():
         print(f"Returning global score: {global_score[0]}")  # デバッグ用に返されるスコアを出力
         return jsonify({'score': global_score[0]})
 
-      
+@app.route('/reset-score', methods=['POST'])
+def reset_score():
+    global global_score
+    with score_lock:
+        global_score = [0]  # スコアを初期化
+        print("スコアがリセットされました")
+    return jsonify({'status': 'Score reset'})
+
 if __name__ == '__main__':
     app.run(debug=True)
