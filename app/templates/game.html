@@ -442,13 +442,11 @@
         //         });
         // }
 
-        function fetchReactScore() {
-            fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/submit-score')
+        const fetchReactScore = () => {
+            fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/get-score')
                 .then(response => response.json())
                 .then(data => {
-                    const ReactScore = data.score;
-
-                    totalScore += ReactScore;
+                    const totalScore = data.score;
 
                     // デバッグ用に合算されたスコアを出力
                     console.log('Updated total score:', totalScore);
@@ -459,7 +457,7 @@
                 .catch(error => {
                     console.error('Error fetching score:', error);
                 });
-        }
+        };
 
 
         // 0.1秒ごとにスコアを取得して更新
