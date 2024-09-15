@@ -31,14 +31,15 @@
         </td>
         <td>
             <!-- スタートボタン -->
-            <button id="start-button">Start</button>
+            <button class="start-button" id="start-button">Start</button>
+            <!-- やり直しボタン -->
+            <button class="retry-button" onclick='location.href="/"'>Retry</button>
         </td>
     </table>
 
     <div style="display: flex;">
         <!-- 左側の動画 -->
         <div class="movie" style="flex: 1; position: relative;">
-            <h2>Sample Video</h2>
             <video id="sample-video">
                 <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
                     type="video/mp4">
@@ -50,7 +51,6 @@
 
         <!-- 右側のカメラ映像 -->
         <div class="camera" style="flex: 1;position:relative;">
-            <h2>Live Camera Feed</h2>
             <video id="live-video" autoplay></video>
             <canvas id="output-canvas"></canvas>
         </div>
@@ -142,7 +142,6 @@
                 mirroredLandmarks[left] = mirroredLandmarks[right];
                 mirroredLandmarks[right] = temp;
             });
-
             return mirroredLandmarks;
         }
 
