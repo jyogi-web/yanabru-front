@@ -86,6 +86,10 @@ def dynamic():
     video_file = url_for('static', filename='video/ダイナミック琉球反転_mini.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
+@app.route('/eigadancer')
+def eigadancer():
+    return render_template('eigadancer.html')
+
 @app.route('/landtest')
 def landtest():
     return render_template('landtest.html')
