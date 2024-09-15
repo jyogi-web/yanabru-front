@@ -76,6 +76,7 @@
             <video id="live-video" autoplay></video>
             <canvas id="output-canvas"></canvas>
         </div>
+
     </div>
 
     <script>
@@ -292,7 +293,7 @@
 
         //スコアを加算
         function addScore(point) {
-            if (point > 0) {
+            if (point >= 0) {
                 document.getElementById('point').innerText = "+" + point;
             }
             else {
