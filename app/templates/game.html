@@ -33,7 +33,7 @@
             <!-- スタートボタン -->
             <button class="start-button" id="start-button">Start</button>
             <!-- やり直しボタン -->
-            <button class="retry-button" onclick='location.href="/game"'>Retry</button>
+            <button class="retry-button" onclick='location.href="{{link}}" '>Retry</button>
         </td>
     </table>
 
@@ -41,8 +41,7 @@
         <!-- 左側の動画 -->
         <div class="movie" style="flex: 1; position: relative;">
             <video id="sample-video">
-                <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
-                    type="video/mp4">
+                <source src="{{video_file}}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <!-- 骨格ランドマークを描画するCanvas -->
@@ -55,7 +54,6 @@
             <canvas id="output-canvas"></canvas>
         </div>
     </div>
-
 
     <script>
         // HTML要素の取得
