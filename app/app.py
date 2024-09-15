@@ -1,3 +1,4 @@
+from curses import COLS
 from flask import Flask, render_template, jsonify, request,url_for
 import json
 import subprocess
@@ -7,7 +8,6 @@ import threading
 import time
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 # グローバル変数としてスコアを保持
