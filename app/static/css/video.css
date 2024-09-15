@@ -6,7 +6,7 @@ canvas {
 
 .movie video,
 .movie canvas {
-    width: 1085px;
+    width: 70vw;
     height: auto;
     top: 0;
     left: 0;
@@ -15,7 +15,7 @@ canvas {
 
 .camera video,
 .camera canvas {
-    width: 400px;
+    width: 25vw;
     height: auto;
     bottom: 1;
     right: 0;
@@ -23,13 +23,18 @@ canvas {
 }
 
 .start-button {
-    width: 30em;
-    height: 5em;
-    margin-left: 200px;
+    width: 40vw;
+    height: 5vw;
+    margin-left: 5vw;
 }
 
 .retry-button {
-    width: 5em;
-    height: 5em;
-    margin-left: 100px;
+    width: 15vw;
+    height: 5vw;
+    margin-left: 5vw;
+    margin-right: 7vw;
+}
+
+.sim_eva {
+    padding-right: 5vw;
 }
