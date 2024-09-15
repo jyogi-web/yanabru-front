@@ -8,7 +8,8 @@ import threading
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://red-grass-08143c200.5.azurestaticapps.net"}})
+
 
 # グローバル変数としてスコアを保持
 global_score = [0]  # リストで初期化
@@ -40,8 +41,10 @@ def get_pose_landmarks():
 # メインエンドポイント
 @app.route('/')
 def index():
-    return render_template('index.html')
-
+    global global_score
+    with score_lock:
+        current_score = global_score[0]  # 現在のスコアを取得
+    return render_template('index.html', score=current_score)
 
 @app.route('/eisa')
 def eisa():
@@ -104,5 +107,17 @@ def reset_score():
         print("スコアがリセットされました")
     return jsonify({'status': 'Score reset'})
 
+@app.route('/submit-score', methods=['POST'])
+def submit_score():
+    global global_score
+    data = request.json
+    new_score = data.get('score', 0)
+    
+    with score_lock:
+        global_score[0] += new_score  # サーバー側のスコアに加算
+        print(f"Updated global score: {global_score[0]}")  # デバッグ用にスコアを出力
+    
+    return jsonify({'status': 'Score updated', 'current_score': global_score[0]})
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0')
