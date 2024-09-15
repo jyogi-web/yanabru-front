@@ -42,7 +42,6 @@
         <div class="movie" style="flex: 1; position: relative;">
             <video id="sample-video">
                 <source src="{{video_file}}" type="video/mp4">
-
                 Your browser does not support the video tag.
             </video>
             <!-- 骨格ランドマークを描画するCanvas -->
@@ -108,7 +107,7 @@
                 });
             }
         });
-
+      
         function onResults(results) {
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
@@ -446,7 +445,6 @@
 
         // 0.1秒ごとにスコアを取得して更新
         setInterval(fetchScore, 100);
-
     </script>
 </body>
 
