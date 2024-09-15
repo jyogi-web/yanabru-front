@@ -41,10 +41,7 @@ def get_pose_landmarks():
 # メインエンドポイント
 @app.route('/')
 def index():
-    global global_score
-    with score_lock:
-        current_score = global_score[0]  # 現在のスコアを取得
-    return render_template('index.html', score=current_score)
+    return render_template('index.html')
 
 @app.route('/eisa')
 def eisa():
