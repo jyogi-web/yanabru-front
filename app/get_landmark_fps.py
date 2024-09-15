@@ -7,9 +7,11 @@ import time
 # Mediapipeのポーズモジュールを初期化
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
+# 左右反転（鏡合わせ）になってるか
+reverse=True
 
 # 見本動画から骨格ランドマークを抽出し、保存
-def extract_and_save_landmarks(video_path, save_path, target_fps=30):
+def extract_and_save_landmarks(video_path, save_path, target_fps=60):
     cap = cv2.VideoCapture(video_path)
     landmarks_data = []
     
@@ -47,4 +49,4 @@ def extract_and_save_landmarks(video_path, save_path, target_fps=30):
         json.dump(landmarks_data, f)
 
 # 見本動画の骨格ランドマークを抽出して保存
-extract_and_save_landmarks('app/static/video/sample_15s.mp4', 'app/static/landmarks/sample_landmarks(10fps).json')
+extract_and_save_landmarks('app/static/video/Just Dance Wii 2 Suirenka mini.mp4', 'app/static/landmarks/suirenka-mini_landmarks.json')
