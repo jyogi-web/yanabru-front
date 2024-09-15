@@ -49,4 +49,4 @@ def extract_and_save_landmarks(video_path, save_path, target_fps=60):
         json.dump(landmarks_data, f)
 
 # 見本動画の骨格ランドマークを抽出して保存
-extract_and_save_landmarks('app/static/video/ダイナミック琉球反転_mini.mp4', 'app/static/landmarks/dynamic_landmarks.json')
+extract_and_save_landmarks('app/static/video/ハレ晴レユカイ反転.mp4', 'app/static/landmarks/harehare_landmarks.json')
