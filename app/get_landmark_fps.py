@@ -49,4 +49,4 @@ def extract_and_save_landmarks(video_path, save_path, target_fps=60):
         json.dump(landmarks_data, f)
 
 # 見本動画の骨格ランドマークを抽出して保存
-extract_and_save_landmarks('app/static/video/Just Dance Wii 2 Suirenka mini.mp4', 'app/static/landmarks/suirenka-mini_landmarks.json')
+extract_and_save_landmarks('app/static/video/マル・マル・モリ・モリ_反転.mp4', 'app/static/landmarks/marumori_landmarks.json')

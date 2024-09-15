@@ -111,7 +111,13 @@
                     });
 
                 sampleVideoElement.play();
-                requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
+
+                setTimeout(() => {
+
+                    requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
+                }, 3000);//1秒待つ
+
+
                 isStarted = true;
 
                 // Joycon.pyを並列で実行するAPIを呼び出す
