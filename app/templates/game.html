@@ -281,18 +281,23 @@
         //         .catch(error => console.error('Error:', error));
         // }
 
-        //スコアを加算
+        // スコアを加算
         function addScore(point) {
+            // 加点の表示
             document.getElementById('point').innerText = point;
+            // クライアント側のスコアを更新
             totalScore += point;
             updateScore(totalScore);
-            console.log(totalScore);
+            // サーバーにスコアの増加量を送信
+            submitScoreIncrementToServer(point);
+            console.log('Updated total score (client-side):', totalScore);
         }
 
         // スコアを更新する関数
         function updateScore(score) {
             document.getElementById('score').innerText = score;
         }
+
         // 類似度を更新する関数
         function updateSimilarity(similarity) {
             similarity_p = Math.round(similarity * 100);
@@ -484,24 +489,23 @@
         //         });
         // }
 
-        const fetchReactScore = () => {
-            fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/get-score')
-                .then(response => response.json())
-                .then(data => {
-                    const fetchedScore = data.score;
-
-                    // デバッグ用に合算されたスコアを出力
-                    console.log('Updated total score:', fetchedScore);
-
-                    // サーバーから取得したスコアをグローバルなtotalScoreに追加
-                    totalScore += fetchedScore;
-                    // 合算されたスコアを表示
-                    updateScore(totalScore);
-                })
-                .catch(error => {
-                    console.error('Error fetching score:', error);
-                });
-        };
+// サーバーからスコアを取得する関数
+const fetchReactScore = () => {
+    fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/get-score')
+        .then(response => response.json())
+        .then(data => {
+            const fetchedScore = data.score;
+            // デバッグ用にサーバーから取得したスコアを出力
+            console.log('Updated total score from server:', fetchedScore);
+            // サーバーから取得したスコアでtotalScoreを上書き
+            totalScore = fetchedScore;
+            // 合算されたスコアを表示
+            updateScore(totalScore);
+        })
+        .catch(error => {
+            console.error('Error fetching score:', error);
+        });
+};
 
 
         // 0.1秒ごとにスコアを取得して更新
