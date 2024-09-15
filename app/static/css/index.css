@@ -1,0 +1,51 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* すべての要素の余白をゼロに */
+}
+
+html, body {
+    height: 100%; /* ページ全体の高さを確保 */
+}
+
+body {
+    background-image: url('../img/indexBg.png'); /* 画像のパスを指定 */
+    background-size: cover; /* 画面全体に画像を拡大縮小 */
+    background-position: center; /* 画像を中央に配置 */
+    background-repeat: no-repeat; /* 画像の繰り返しを防ぐ */
+    margin: 0;
+    padding: 0;
+}
+
+h1{
+    text-align: center;
+    font-size: 10vh;
+}
+
+a {
+    display: inline-block;
+    text-decoration: none;
+    color: black;
+    transition: transform 0.3s ease, color 0.3s ease; /* アニメーションの設定 */
+}
+
+/* リンクにホバーした時の拡大アニメーション */
+a:hover {
+    transform: scale(1.2); /* リンクを1.2倍に拡大 */
+    color: red; /* ホバー時に色も変更 */
+}
+
+ /* 左下に配置し、見えないようにするスタイル */
+ .hidden-link {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    opacity: 0; /* 完全に透明にする */
+    z-index: 1000; /* 他の要素の上に配置されるようにする */
+}
+
+/* マウスオーバー時に見えるようにする（オプション） */
+.hidden-link:hover {
+    opacity: 1;
+    transition: opacity 0.5s;
+}

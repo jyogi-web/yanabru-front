@@ -59,6 +59,37 @@ def syounaxn():
     video_file = url_for('static', filename='video/JustDance_Suirenka_mini.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
+@app.route('/odoloop')
+def odoloop():
+    link='/odoloop'
+    update_landmarks('app/static/landmarks/odottezunda_landmarks')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/踊ってない夜を知らないずんだもん反転_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/marumori')
+def marumori():
+    link='/marumori'
+    update_landmarks('app/static/landmarks/marumori_landmarks.json')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/マル・マル・モリ・モリ_反転.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/dynamic')
+def dynamic():
+    link='/dynamic'
+    update_landmarks('app/static/landmarks/dynamic_landmarks.json')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/ダイナミック琉球反転_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/eigadancer')
+def eigadancer():
+    return render_template('eigadancer.html')
+
 @app.route('/landtest')
 def landtest():
     return render_template('landtest.html')
