@@ -77,6 +77,15 @@ def marumori():
     video_file = url_for('static', filename='video/マル・マル・モリ・モリ_反転.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
+@app.route('/dynamic')
+def dynamic():
+    link='/dynamic'
+    update_landmarks('app/static/landmarks/dynamic_landmarks.json')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/ダイナミック琉球反転_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
 @app.route('/landtest')
 def landtest():
     return render_template('landtest.html')
