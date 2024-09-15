@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='css/video.css') }}" rel="stylesheet" />
+    <title>Dance Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+</head>
+
+<body>
+    <h1>ジャストエイサー</h1>
+    <div>
+        <label for="camera-select">Select Camera:</label>
+        <select id="camera-select"></select>
+    </div>
+
+    <table>
+        <td>
+            <!-- スコア表示 -->
+            <div>
+                <h2>Score: <span id="score">0</span></h2>
+            </div>
+            <!-- 類似度表示 -->
+            <div>
+                <h2>Similarity: <span id="similarity">0</span></h2>
+            </div>
+        </td>
+        <td>
+            <!-- スタートボタン -->
+            <button class="start-button" id="start-button">Start</button>
+            <!-- やり直しボタン -->
+            <button class="retry-button" onclick='location.href="/"'>Retry</button>
+        </td>
+    </table>
+
+    <div style="display: flex;">
+        <!-- 左側の動画 -->
+        <div class="movie" style="flex: 1; position: relative;">
+            <video id="sample-video">
+                <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
+                    type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <!-- 骨格ランドマークを描画するCanvas -->
+            <canvas id="sample-canvas" style="position: absolute;"></canvas>
+        </div>
+
+        <!-- 右側のカメラ映像 -->
+        <div class="camera" style="flex: 1;position:relative;">
+            <video id="live-video" autoplay></video>
+            <canvas id="output-canvas"></canvas>
+        </div>
+    </div>
+
+
+    <script>
+        // HTML要素の取得
+        const sampleVideoElement = document.getElementById('sample-video');
+        const sampleCanvasElement = document.getElementById('sample-canvas');
+        const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
+        const startButton = document.getElementById('start-button');
+        let isStarted = false;
+        let savedLandmarks = [];
+
+        var player_landmarks;
+        var totalScore = 0;
+
+        // 再生前にお手本動画の骨格ランドマークをサーバーから取得して保存
+        async function fetchPoseLandmarks() {
+            const response = await fetch('/get-pose-landmarks');
+            const data = await response.json();
+            savedLandmarks = data.landmarks;
+            console.log('Saved landmarks:', savedLandmarks);
+        }
+
+        // スタートボタンを押したときの処理
+        startButton.addEventListener('click', () => {
+            if (!isStarted) {
+                // 動画を再生する前にスコアをリセット
+                fetch('http://127.0.0.1:5000/reset-score', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.status);  // スコアリセットの確認
+                })
+                .catch(error => {
+                    console.error('Error resetting score:', error);
+                });
+        
+                sampleVideoElement.play();
+                requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
+                isStarted = true;
+        
+                // Joycon.pyを並列で実行するAPIを呼び出す
+                fetch('http://127.0.0.1:5000/start-joycon', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.status);  // Joycon.pyの実行開始を確認
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+        
+        function onResults(results) {
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+
+            canvasElement.width = videoWidth;
+            canvasElement.height = videoHeight;
+
+            canvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+            // 反転処理を追加
+            canvasCtx.save();
+            canvasCtx.translate(videoWidth, 0);
+            canvasCtx.scale(-1, 1);
+            canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
+            canvasCtx.restore();
+
+
+            if (results.poseLandmarks) {
+                // ランドマークの左右反転処理
+                const mirroredLandmarks = mirrorLandmarks(results.poseLandmarks, videoWidth);
+                player_landmarks = mirroredLandmarks;  // 鏡像のランドマークを取得
+
+                // 反転したカメラ映像に基づいてランドマークを描画
+                for (let landmark of mirroredLandmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
+
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    canvasCtx.fillStyle = 'rgb(0,255,0)';  // 緑色
+                    canvasCtx.fill();
+                    canvasCtx.stroke();
+                }
+            }
+
+            //sendPoseData(player_landmarks);
+        }
+
+        // ランドマークを左右反転させる関数
+        function mirrorLandmarks(landmarks, videoWidth) {
+            const mirroredLandmarks = landmarks.map(landmark => {
+                return {
+                    ...landmark,
+                    x: 1 - landmark.x  // x座標を反転
+                };
+            });
+
+            // 左右のランドマークを交換（例えば、右手と左手を入れ替える）
+            const swapIndices = [
+                [11, 12], [13, 14], [15, 16],  // 肩、肘、手首
+                [23, 24], [25, 26], [27, 28],  // 腰、膝、足首
+            ];
+
+            swapIndices.forEach(([left, right]) => {
+                const temp = mirroredLandmarks[left];
+                mirroredLandmarks[left] = mirroredLandmarks[right];
+                mirroredLandmarks[right] = temp;
+            });
+            return mirroredLandmarks;
+        }
+
+        // 保存されたランドマークを動画の上に描画する関数
+        function drawSavedLandmarks() {
+            const videoWidth = sampleVideoElement.videoWidth;
+            const videoHeight = sampleVideoElement.videoHeight;
+            sampleCanvasElement.width = videoWidth;
+            sampleCanvasElement.height = videoHeight;
+
+            // 現在のフレームに対応するランドマークデータを取得
+            const currentTime = sampleVideoElement.currentTime;
+            const fps = 30;  // 保存したランドマークのFPSに合わせる
+            const currentFrame = Math.floor(currentTime * fps);  // 指定のfpsでフレーム数を計算
+
+            console.log('Current frame:', currentFrame);
+
+            if (savedLandmarks[currentFrame]) {
+                sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
+                sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
+
+                const landmarks = savedLandmarks[currentFrame];
+
+                //スコア更新する
+                Comparison_Calculation(landmarks, player_landmarks);
+
+                for (let landmark of landmarks) {
+                    const x = landmark.x * videoWidth;
+                    const y = landmark.y * videoHeight;
+                    sampleCanvasCtx.beginPath();
+                    sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';  // 赤色
+                    sampleCanvasCtx.fill();
+                    sampleCanvasCtx.stroke();
+                }
+            } else {
+                console.log('No landmarks for this frame');
+            }
+
+            if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
+                requestAnimationFrame(drawSavedLandmarks);
+            }
+        }
+
+        // カメラ映像の取得と処理
+        const videoElement = document.getElementById('live-video');
+        const canvasElement = document.getElementById('output-canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+
+
+        // MediaPipe Poseの初期化
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        pose.onResults(onResults);
+
+        // カメラの設定と開始
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await pose.send({ image: videoElement });
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        // // Poseデータをサーバーに送信
+        // function sendPoseData(poseLandmarks) {
+        //     const poseData = poseLandmarks.map(landmark => ({
+        //         x: landmark.x,
+        //         y: landmark.y
+        //     }));
+
+        //     fetch('/pose-data', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //         },
+        //         body: JSON.stringify({ joints: poseData }),
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             console.log('Success:', data);
+        //             updateScore(data.score);
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        // }
+
+        //スコアを加算
+        function addScore(point) {
+            totalScore += point;
+            updateScore(totalScore);
+            console.log(totalScore);
+        }
+
+        // スコアを更新する関数
+        function updateScore(score) {
+            document.getElementById('score').innerText = score;
+        }
+        // 類似度を更新する関数
+        function updateSimilarity(similarity) {
+            document.getElementById('similarity').innerText = similarity;
+        }
+
+
+        fetchPoseLandmarks();  // ページ読み込み時にンドマークを取得
+
+        const cameraSelect = document.getElementById('camera-select');
+
+        // カメラデバイスの取得と選択肢の設定
+        async function initializeCameraSelection() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            videoDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${cameraSelect.options.length + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // デフォルトのカメラを選択
+            if (videoDevices.length > 0) {
+                cameraSelect.value = videoDevices[0].deviceId;
+            }
+        }
+
+        initializeCameraSelection();
+
+        // カメラの変更時にカメラを再設定する
+        cameraSelect.addEventListener('change', () => {
+            startCamera(cameraSelect.value);
+        });
+
+        // カメラを開始する関数
+        function startCamera(deviceId) {
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await pose.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480,
+                deviceId: deviceId
+            });
+            camera.start();
+        }
+
+        // 初期カメラ設定
+        startCamera(cameraSelect.value);
+
+        //二つのランドマークからスコアを出す
+        function Comparison_Calculation(landmarks1, landmarks2) {
+            //全身が映っているか
+            isFull = isFullBodyVisible(landmarks2);
+            //映っているなら類似度を出す
+            if (isFull) {
+                //相対座標に変換
+                R_landmarks1 = getRelativeLandmarks(landmarks1);
+                R_landmarks2 = getRelativeLandmarks(landmarks2);
+
+                //類似度を算出
+                similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
+                updateSimilarity(similarity);
+
+                //類似度をもとにスコアを加算
+                if (similarity > 0.8) {
+                    addScore(Math.round(similarity * 10));
+                }
+                else if (similarity < 0.3) {
+                    addScore(Math.round(-(1 - similarity)));
+                }
+            }
+            else {
+                similarity = 0;
+                addScore(-1);
+            }
+
+        }
+
+        function getRelativeLandmarks(landmarks) {
+            if (!landmarks || landmarks.length === 0) {
+                console.error("ランドマークが正しく取得されていません");
+                return [];  // エラー回避のために空の配列を返す
+            }
+
+            const baseLandmark = landmarks[12];  // 基準座標
+            return landmarks.map(landmark => ({
+                x: landmark.x - baseLandmark.x,
+                y: landmark.y - baseLandmark.y,
+            }));
+        }
+
+        function calculateCosineSimilarity(landmarks1, landmarks2) {
+            let dotProduct = 0;
+            let norm1 = 0;
+            let norm2 = 0;
+
+            for (let i = 0; i < landmarks1.length; i++) {
+                const x1 = landmarks1[i].x;
+                const y1 = landmarks1[i].y;
+                const x2 = landmarks2[i].x;
+                const y2 = landmarks2[i].y;
+
+                dotProduct += (x1 * x2) + (y1 * y2);
+                norm1 += (x1 * x1) + (y1 * y1);
+                norm2 += (x2 * x2) + (y2 * y2);
+            }
+
+            //値が高すぎたので0.8引いて5をかけた
+            return (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
+        }
+
+        function isFullBodyVisible(landmarks) {
+            // チェックしたいランドマークのインデックス
+            const REQUIRED_LANDMARKS = [
+                11, 12,  // 左肩, 右肩
+                23, 24,  // 左腰, 右腰
+                27, 28,  // 左膝, 右膝
+                31, 32   // 左足先, 右足先
+            ];
+
+            // 全てのランドマークが存在するか確認
+            return REQUIRED_LANDMARKS.every(index => landmarks[index] && landmarks[index].visibility > 0.5);
+        }
+
+
+        // function updateScoreWithSimilarity(currentLandmarks, savedLandmarks) {
+        //     const relativeCurrent = getRelativeLandmarks(currentLandmarks);
+        //     const relativeSaved = getRelativeLandmarks(savedLandmarks);
+
+        //     const similarity = calculateCosineSimilarity(relativeCurrent, relativeSaved);
+
+        //     let score = 0;
+        //     if (similarity > 0.9) {  // 類似度が90%以上の場合にスコアを加算
+        //         score += Math.floor(similarity * 100);  // 類似度を元にスコア加算
+        //     }
+
+        //     updateScore(score);
+        // }
+
+        let joyconPreviousScore = 0; // 前回取得したJoy-Conスコア
+
+        // Joy-Conのスコアと既存のスコアを合算して表示する関数
+        function fetchScore() {
+            fetch('http://127.0.0.1:5000/get-score')
+            .then(response => response.json())
+            .then(data => {
+                const joyconScore = data.score;
+                
+                // デバッグ用に現在取得したJoy-Conスコアを出力
+                console.log('Current Joy-Con score from server:', joyconScore);
+        
+                // Joy-Conスコアとの差分を計算して加算
+                const scoreDifference = joyconScore - joyconPreviousScore;
+                joyconPreviousScore = joyconScore;
+                
+                totalScore += scoreDifference;
+        
+                // デバッグ用に合算されたスコアを出力
+                console.log('Updated total score:', totalScore);
+        
+                // 合算されたスコアを表示
+                updateScore(totalScore);
+            })
+            .catch(error => {
+                console.error('Error fetching score:', error);
+            });
+        }
+
+
+        // 0.1秒ごとにスコアを取得して更新
+        setInterval(fetchScore, 100);
+        
+    </script>
+</body>
+
+</html>
