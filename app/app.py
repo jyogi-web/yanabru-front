@@ -27,6 +27,10 @@ def get_pose_landmarks():
 def index():
     return render_template('index.html')
 
+@app.route('/game')
+def play():
+    return render_template('game.html')
+
 @app.route('/landtest')
 def landtest():
     return render_template('landtest.html')
