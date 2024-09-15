@@ -23,6 +23,9 @@
                     <!-- カメラリセットボタン -->
                     <button class="camera-button" onclick="startCamera(cameraSelect.value)">カメラリセット</button>
                 </td>
+                <td>
+                    <a href='/'>曲選択へ</a>
+                </td>
             </tr>
         </table>
 
@@ -52,7 +55,7 @@
             </div>
             <!-- 加算表示 -->
             <div>
-                <h2>+<span id="point">0</span>point</h2>
+                <h2><span id="point">0</span>point</h2>
             </div>
         </td>
     </table>
@@ -115,7 +118,7 @@
                 setTimeout(() => {
 
                     requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
-                }, 3000);//1秒待つ
+                },);//1秒待つ
 
 
                 isStarted = true;
@@ -289,7 +292,13 @@
 
         //スコアを加算
         function addScore(point) {
-            document.getElementById('point').innerText = point;
+            if (point > 0) {
+                document.getElementById('point').innerText = "+" + point;
+            }
+            else {
+                document.getElementById('point').innerText = point;
+            }
+
             totalScore += point;
             updateScore(totalScore);
             console.log(totalScore);
@@ -365,31 +374,41 @@
                 //類似度を算出
                 similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
                 updateSimilarity(similarity);
+                document.getElementById("evaluation").style.fontSize = "25px";
+
 
                 //類似度をもとにスコアを加算
                 if (similarity > 0.9) {
                     document.getElementById('evaluation').innerText = "Excellent!!";
+                    document.getElementById("evaluation").style.color = "Chartreuse";
                     addScore(10);
                 }
                 else if (similarity > 0.8) {
                     document.getElementById('evaluation').innerText = "Great!";
+                    document.getElementById("evaluation").style.color = "coral";
                     addScore(Math.round(similarity * 10));
                 }
                 else if (similarity > 0.7) {
                     document.getElementById('evaluation').innerText = "Good";
+                    document.getElementById("evaluation").style.color = "DeepSkyBlue";
                     addScore(5);
                 }
                 else if (similarity > 0.5) {
                     document.getElementById('evaluation').innerText = "Safe";
+                    document.getElementById("evaluation").style.color = "green";
                     addScore(0);
                 }
                 else {
                     document.getElementById('evaluation').innerText = "Bad";
-                    addScore(-1);
+                    document.getElementById("evaluation").style.color = "blue";
+                    addScore(-5);
                 }
             }
             else {
                 document.getElementById('evaluation').innerText = "判定不可";
+                document.getElementById("evaluation").style.color = "red";
+                document.getElementById("evaluation").style.fontSize = "40px";
+
                 similarity = 0;
                 addScore(0);
             }
