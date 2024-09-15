@@ -79,7 +79,7 @@
         startButton.addEventListener('click', () => {
             if (!isStarted) {
                 // 動画を再生する前にスコアをリセット
-                fetch('http://127.0.0.1:5000/reset-score', {
+                fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/reset-score', {
                     method: 'POST'
                 })
                     .then(response => response.json())
@@ -95,16 +95,16 @@
                 isStarted = true;
 
                 // Joycon.pyを並列で実行するAPIを呼び出す
-                fetch('http://127.0.0.1:5000/start-joycon', {
-                    method: 'POST'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.status);  // Joycon.pyの実行開始を確認
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                // fetch('http://127.0.0.1:5000/start-joycon', {
+                //     method: 'POST'
+                // })
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         console.log(data.status);  // Joycon.pyの実行開始を確認
+                //     })
+                //     .catch(error => {
+                //         console.error('Error:', error);
+                //     });
             }
         });
 
@@ -413,34 +413,34 @@
         //     updateScore(score);
         // }
 
-        let joyconPreviousScore = 0; // 前回取得したJoy-Conスコア
+        // let joyconPreviousScore = 0; // 前回取得したJoy-Conスコア
 
-        // Joy-Conのスコアと既存のスコアを合算して表示する関数
-        function fetchScore() {
-            fetch('http://127.0.0.1:5000/get-score')
-                .then(response => response.json())
-                .then(data => {
-                    const joyconScore = data.score;
+        // // Joy-Conのスコアと既存のスコアを合算して表示する関数
+        // function fetchScore() {
+        //     fetch('http://127.0.0.1:5000/get-score')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             const joyconScore = data.score;
 
-                    // デバッグ用に現在取得したJoy-Conスコアを出力
-                    console.log('Current Joy-Con score from server:', joyconScore);
+        //             // デバッグ用に現在取得したJoy-Conスコアを出力
+        //             console.log('Current Joy-Con score from server:', joyconScore);
 
-                    // Joy-Conスコアとの差分を計算して加算
-                    const scoreDifference = joyconScore - joyconPreviousScore;
-                    joyconPreviousScore = joyconScore;
+        //             // Joy-Conスコアとの差分を計算して加算
+        //             const scoreDifference = joyconScore - joyconPreviousScore;
+        //             joyconPreviousScore = joyconScore;
 
-                    totalScore += scoreDifference;
+        //             totalScore += scoreDifference;
 
-                    // デバッグ用に合算されたスコアを出力
-                    console.log('Updated total score:', totalScore);
+        //             // デバッグ用に合算されたスコアを出力
+        //             console.log('Updated total score:', totalScore);
 
-                    // 合算されたスコアを表示
-                    updateScore(totalScore);
-                })
-                .catch(error => {
-                    console.error('Error fetching score:', error);
-                });
-        }
+        //             // 合算されたスコアを表示
+        //             updateScore(totalScore);
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching score:', error);
+        //         });
+        // }
 
         function fetchReactScore() {
             fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/submit-score')
