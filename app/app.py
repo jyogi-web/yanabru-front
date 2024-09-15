@@ -26,20 +26,10 @@ def get_pose_landmarks():
         landmarks_data = json.load(file)
     return jsonify(landmarks=landmarks_data)
 
-# # Poseデータを受け取るエンドポイント
-# @app.route('/pose-data', methods=['POST'])
-# def pose_data():
-#     data = request.json
-#     # ここで受け取ったポーズデータを処理する
-#     print("Received pose data:", data)
-#     # 例としてスコアを固定値で返す
-#     return jsonify(score=100)
-
 # メインエンドポイント
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/eisa')
 def eisa():
@@ -62,7 +52,7 @@ def syounaxn():
 @app.route('/odoloop')
 def odoloop():
     link='/odoloop'
-    update_landmarks('app/static/landmarks/odottezunda_landmarks')
+    update_landmarks('app/static/landmarks/odottezunda_landmarks.json')
     #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
     # 動画ファイルのパスを動的に生成
     video_file = url_for('static', filename='video/踊ってない夜を知らないずんだもん反転_mini.mp4')
@@ -84,6 +74,22 @@ def dynamic():
     #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
     # 動画ファイルのパスを動的に生成
     video_file = url_for('static', filename='video/ダイナミック琉球反転_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/koi')
+def koi():
+    link='/koi'
+    update_landmarks('app/static/landmarks/koidansu_landmarks.json')
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/恋ダンス振り付け反転.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/harehare')
+def harehare():
+    link='/harehare'
+    update_landmarks('app/static/landmarks/harehare_landmarks.json')
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/ハレ晴レユカイ反転.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
 @app.route('/landtest')
