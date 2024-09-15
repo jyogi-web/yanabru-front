@@ -22,8 +22,14 @@ canvas {
     position: absolute;
 }
 
-button {
+.start-button {
     width: 30em;
     height: 5em;
     margin-left: 200px;
+}
+
+.retry-button {
+    width: 5em;
+    height: 5em;
+    margin-left: 100px;
 }
