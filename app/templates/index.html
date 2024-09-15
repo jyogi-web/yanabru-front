@@ -74,6 +74,18 @@
         // スタートボタンを押したときの処理
         startButton.addEventListener('click', () => {
             if (!isStarted) {
+                // 動画を再生する前にスコアをリセット
+                fetch('http://127.0.0.1:5000/reset-score', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.status);  // スコアリセットの確認
+                })
+                .catch(error => {
+                    console.error('Error resetting score:', error);
+                });
+        
                 sampleVideoElement.play();
                 requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
                 isStarted = true;
