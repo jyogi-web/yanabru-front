@@ -1,7 +1,18 @@
 from flask import Flask, render_template, jsonify, request
 import json
+import subprocess
+from .Joycon import joycon
+from flask_cors import CORS
+import subprocess
+import threading
+import time
 
 app = Flask(__name__)
+CORS(app)
+
+# グローバル変数としてスコアを保持
+global_score = [0]  # リストで初期化
+score_lock = threading.Lock()
 
 # ランドマークデータの保存先
 landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
@@ -30,6 +41,45 @@ def index():
 @app.route('/landtest')
 def landtest():
     return render_template('landtest.html')
+
+# Joycon.pyを実行するためのAPI
+@app.route('/run-joycon', methods=['POST'])
+def run_joycon():
+    print("runrunrun")
+    try:
+        # Joycon.pyをバックグラウンドで実行
+        process = subprocess.Popen(['python', '../Joycon.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if stderr:
+            return jsonify({'status': 'Joycon.py failed', 'error': stderr.decode()}), 500
+        return jsonify({'status': 'Joycon.py started'}), 200
+    except Exception as e:
+        return jsonify({'status': 'Error', 'error': str(e)}), 500
+
+
+# Joy-Conの処理をバックグラウンドで実行するエンドポイント
+@app.route('/start-joycon', methods=['POST'])
+def start_joycon():
+    print("start_joycon!!")
+    start_time = time.time()  # スタートボタンが押された時の時間を記録
+    # Joyconの処理をバックグラウンドで実行
+    threading.Thread(target=joycon, args=(global_score, score_lock, start_time)).start()
+    return jsonify({'status': 'Joy-Con processing started'}), 200
+
+@app.route('/get-score', methods=['GET'])
+def get_score():
+    global global_score
+    with score_lock:
+        print(f"Returning global score: {global_score[0]}")  # デバッグ用に返されるスコアを出力
+        return jsonify({'score': global_score[0]})
+
+@app.route('/reset-score', methods=['POST'])
+def reset_score():
+    global global_score
+    with score_lock:
+        global_score = [0]  # スコアを初期化
+        print("スコアがリセットされました")
+    return jsonify({'status': 'Score reset'})
 
 if __name__ == '__main__':
     app.run(debug=True)
