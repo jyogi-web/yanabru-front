@@ -5,6 +5,7 @@ from .Joycon import joycon
 from flask_cors import CORS
 import subprocess
 import threading
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -44,6 +45,7 @@ def landtest():
 # Joycon.pyを実行するためのAPI
 @app.route('/run-joycon', methods=['POST'])
 def run_joycon():
+    print("runrunrun")
     try:
         # Joycon.pyをバックグラウンドで実行
         process = subprocess.Popen(['python', '../Joycon.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -59,14 +61,15 @@ def run_joycon():
 @app.route('/start-joycon', methods=['POST'])
 def start_joycon():
     print("start_joycon!!")
+    start_time = time.time()  # スタートボタンが押された時の時間を記録
     # Joyconの処理をバックグラウンドで実行
-    threading.Thread(target=joycon, args=(global_score, score_lock)).start()
+    threading.Thread(target=joycon, args=(global_score, score_lock, start_time)).start()
     return jsonify({'status': 'Joy-Con processing started'}), 200
 
 # スコアを取得するエンドポイント
 @app.route('/get-score', methods=['GET'])
 def get_score():
-    print("getscore!")
+    # print("getscore!")
     with score_lock:
         return jsonify({'score': global_score}), 200
 

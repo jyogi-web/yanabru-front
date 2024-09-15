@@ -3,12 +3,12 @@ import numpy as np
 
 # お手本データ
 reference_times = {
-    1: {"soundTimer": 6.96},
-    2: {"soundTimer": 9.86},
-    3: {"soundTimer": 10.2},
-    4: {"soundTimer": 14.52},
-    5: {"soundTimer": 17.4},
-    6: {"soundTimer": 17.88}
+    1: {"soundTimer": 6.06},
+    2: {"soundTimer": 8.45},
+    3: {"soundTimer": 8.84},
+    4: {"soundTimer": 12.45},
+    5: {"soundTimer": 14.86},
+    6: {"soundTimer": 15.27}
 }
 
 # お手本データの時間と一致しているかどうかを判定し、得点を付与する関数
