@@ -488,11 +488,13 @@
             fetch('https://justeisa-h7drgugva3g6fqap.japaneast-01.azurewebsites.net/get-score')
                 .then(response => response.json())
                 .then(data => {
-                    const totalScore = data.score;
+                    const fetchedScore = data.score;
 
                     // デバッグ用に合算されたスコアを出力
-                    console.log('Updated total score:', totalScore);
+                    console.log('Updated total score:', fetchedScore);
 
+                    // サーバーから取得したスコアをグローバルなtotalScoreに追加
+                    totalScore += fetchedScore;
                     // 合算されたスコアを表示
                     updateScore(totalScore);
                 })
