@@ -2,13 +2,11 @@ from flask import Flask, render_template, jsonify, request,url_for
 import json
 import subprocess
 from .Joycon import joycon
-from flask_cors import CORS
 import subprocess
 import threading
 import time
 
 app = Flask(__name__)
-CORS(app)
 
 # グローバル変数としてスコアを保持
 global_score = [0]  # リストで初期化
@@ -52,13 +50,40 @@ def eisa():
     video_file = url_for('static', filename='video/sample_1m.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
-@app.route('/syounaxn')
+@app.route('/suirenka')
 def syounaxn():
-    link='/syounaxn'
+    link='/suirenka'
     update_landmarks('app/static/landmarks/suirenka-mini_landmarks.json')
     #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
     # 動画ファイルのパスを動的に生成
     video_file = url_for('static', filename='video/JustDance_Suirenka_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/odoloop')
+def odoloop():
+    link='/odoloop'
+    update_landmarks('app/static/landmarks/odottezunda_landmarks')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/踊ってない夜を知らないずんだもん反転_mini.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/marumori')
+def marumori():
+    link='/marumori'
+    update_landmarks('app/static/landmarks/marumori_landmarks.json')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/マル・マル・モリ・モリ_反転.mp4')
+    return render_template('game.html',video_file=video_file,link=link)
+
+@app.route('/dynamic')
+def dynamic():
+    link='/dynamic'
+    update_landmarks('app/static/landmarks/dynamic_landmarks.json')
+    #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 動画ファイルのパスを動的に生成
+    video_file = url_for('static', filename='video/ダイナミック琉球反転_mini.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
 @app.route('/landtest')
