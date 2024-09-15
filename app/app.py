@@ -1,4 +1,3 @@
-from curses import COLS
 from flask import Flask, render_template, jsonify, request,url_for
 import json
 import subprocess
