@@ -33,7 +33,7 @@
             <!-- スタートボタン -->
             <button class="start-button" id="start-button">Start</button>
             <!-- やり直しボタン -->
-            <button class="retry-button" onclick='location.href="/"'>Retry</button>
+            <button class="retry-button" onclick='location.href="{{link}}" '>Retry</button>
         </td>
     </table>
 
@@ -41,8 +41,8 @@
         <!-- 左側の動画 -->
         <div class="movie" style="flex: 1; position: relative;">
             <video id="sample-video">
-                <source src="{{ url_for('static', filename='video/Just Dance Wii 2 Suirenka mini.mp4') }}"
-                    type="video/mp4">
+                <source src="{{video_file}}" type="video/mp4">
+
                 Your browser does not support the video tag.
             </video>
             <!-- 骨格ランドマークを描画するCanvas -->
@@ -55,7 +55,6 @@
             <canvas id="output-canvas"></canvas>
         </div>
     </div>
-
 
     <script>
         // HTML要素の取得
@@ -109,7 +108,7 @@
                 });
             }
         });
-        
+
         function onResults(results) {
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
@@ -124,7 +123,6 @@
             canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
             canvasCtx.restore();
-
 
             if (results.poseLandmarks) {
                 // ランドマークの左右反転処理
@@ -448,7 +446,7 @@
 
         // 0.1秒ごとにスコアを取得して更新
         setInterval(fetchScore, 100);
-        
+
     </script>
 </body>
 
