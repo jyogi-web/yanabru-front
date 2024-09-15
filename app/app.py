@@ -2,13 +2,11 @@ from flask import Flask, render_template, jsonify, request,url_for
 import json
 import subprocess
 from .Joycon import joycon
-from flask_cors import CORS
 import subprocess
 import threading
 import time
 
 app = Flask(__name__)
-CORS(app)
 
 # グローバル変数としてスコアを保持
 global_score = [0]  # リストで初期化
@@ -52,9 +50,9 @@ def eisa():
     video_file = url_for('static', filename='video/sample_1m.mp4')
     return render_template('game.html',video_file=video_file,link=link)
 
-@app.route('/syounaxn')
+@app.route('/suirenka')
 def syounaxn():
-    link='/syounaxn'
+    link='/suirenka'
     update_landmarks('app/static/landmarks/suirenka-mini_landmarks.json')
     #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
     # 動画ファイルのパスを動的に生成

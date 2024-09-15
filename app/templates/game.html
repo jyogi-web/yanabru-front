@@ -12,28 +12,48 @@
 </head>
 
 <body>
-    <h1>ジャストエイサー</h1>
     <div>
-        <label for="camera-select">Select Camera:</label>
-        <select id="camera-select"></select>
+        <table>
+            <tr>
+                <td>
+                    <label for="camera-select">Select Camera:</label>
+                    <select id="camera-select"></select>
+                </td>
+                <td>
+                    <!-- カメラリセットボタン -->
+                    <button class="camera-button" onclick="startCamera(cameraSelect.value)">カメラリセット</button>
+                </td>
+            </tr>
+        </table>
+
     </div>
 
     <table>
         <td>
-            <!-- スコア表示 -->
+            <!-- スタートボタン -->
+            <button class="start-button" id="start-button">スタート</button>
+            <!-- やり直しボタン -->
+            <button class="retry-button" onclick='location.href="{{link}}" '>リトライ</button>
+        </td>
+        <td class="sim_eva">
+            <!-- 評価表示 -->
             <div>
-                <h2>Score: <span id="score">0</span></h2>
+                <h2><span id="evaluation">-評価-</span></h2>
             </div>
             <!-- 類似度表示 -->
             <div>
-                <h2>Similarity: <span id="similarity">0</span></h2>
+                <h2>類似度: <span id="similarity">0</span></h2>
             </div>
         </td>
-        <td>
-            <!-- スタートボタン -->
-            <button class="start-button" id="start-button">Start</button>
-            <!-- やり直しボタン -->
-            <button class="retry-button" onclick='location.href="{{link}}" '>Retry</button>
+        <td class="score">
+            <!-- スコア表示 -->
+            <div>
+                <h2>スコア: <span id="score">0</span></h2>
+            </div>
+            <!-- 加算表示 -->
+            <div>
+                <h2>+<span id="point">0</span>point</h2>
+            </div>
         </td>
     </table>
 
@@ -82,32 +102,32 @@
                 fetch('http://127.0.0.1:5000/reset-score', {
                     method: 'POST'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data.status);  // スコアリセットの確認
-                })
-                .catch(error => {
-                    console.error('Error resetting score:', error);
-                });
-        
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.status);  // スコアリセットの確認
+                    })
+                    .catch(error => {
+                        console.error('Error resetting score:', error);
+                    });
+
                 sampleVideoElement.play();
                 requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
                 isStarted = true;
-        
+
                 // Joycon.pyを並列で実行するAPIを呼び出す
                 fetch('http://127.0.0.1:5000/start-joycon', {
                     method: 'POST'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data.status);  // Joycon.pyの実行開始を確認
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.status);  // Joycon.pyの実行開始を確認
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
             }
         });
-      
+
         function onResults(results) {
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
@@ -263,6 +283,7 @@
 
         //スコアを加算
         function addScore(point) {
+            document.getElementById('point').innerText = point;
             totalScore += point;
             updateScore(totalScore);
             console.log(totalScore);
@@ -274,11 +295,13 @@
         }
         // 類似度を更新する関数
         function updateSimilarity(similarity) {
-            document.getElementById('similarity').innerText = similarity;
+            similarity_p = Math.round(similarity * 100);
+            document.getElementById('similarity').innerText = similarity_p;
+
         }
 
 
-        fetchPoseLandmarks();  // ページ読み込み時にンドマークを取得
+        fetchPoseLandmarks();  // ページ読み込み時にランドマークを取得
 
         const cameraSelect = document.getElementById('camera-select');
 
@@ -338,16 +361,31 @@
                 updateSimilarity(similarity);
 
                 //類似度をもとにスコアを加算
-                if (similarity > 0.8) {
+                if (similarity > 0.9) {
+                    document.getElementById('evaluation').innerText = "Excellent!!";
+                    addScore(10);
+                }
+                else if (similarity > 0.8) {
+                    document.getElementById('evaluation').innerText = "Great!";
                     addScore(Math.round(similarity * 10));
                 }
-                else if (similarity < 0.3) {
-                    addScore(Math.round(-(1 - similarity)));
+                else if (similarity > 0.7) {
+                    document.getElementById('evaluation').innerText = "Good";
+                    addScore(5);
+                }
+                else if (similarity > 0.5) {
+                    document.getElementById('evaluation').innerText = "Safe";
+                    addScore(0);
+                }
+                else {
+                    document.getElementById('evaluation').innerText = "Bad";
+                    addScore(-1);
                 }
             }
             else {
+                document.getElementById('evaluation').innerText = "判定不可";
                 similarity = 0;
-                addScore(-1);
+                addScore(0);
             }
 
         }
@@ -382,7 +420,11 @@
             }
 
             //値が高すぎたので0.8引いて5をかけた
-            return (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
+            similarity = (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
+            if (similarity < 0) {
+                similarity = 0;
+            }
+            return similarity;
         }
 
         function isFullBodyVisible(landmarks) {
@@ -418,28 +460,28 @@
         // Joy-Conのスコアと既存のスコアを合算して表示する関数
         function fetchScore() {
             fetch('http://127.0.0.1:5000/get-score')
-            .then(response => response.json())
-            .then(data => {
-                const joyconScore = data.score;
-                
-                // デバッグ用に現在取得したJoy-Conスコアを出力
-                console.log('Current Joy-Con score from server:', joyconScore);
-        
-                // Joy-Conスコアとの差分を計算して加算
-                const scoreDifference = joyconScore - joyconPreviousScore;
-                joyconPreviousScore = joyconScore;
-                
-                totalScore += scoreDifference;
-        
-                // デバッグ用に合算されたスコアを出力
-                console.log('Updated total score:', totalScore);
-        
-                // 合算されたスコアを表示
-                updateScore(totalScore);
-            })
-            .catch(error => {
-                console.error('Error fetching score:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    const joyconScore = data.score;
+
+                    // デバッグ用に現在取得したJoy-Conスコアを出力
+                    console.log('Current Joy-Con score from server:', joyconScore);
+
+                    // Joy-Conスコアとの差分を計算して加算
+                    const scoreDifference = joyconScore - joyconPreviousScore;
+                    joyconPreviousScore = joyconScore;
+
+                    totalScore += scoreDifference;
+
+                    // デバッグ用に合算されたスコアを出力
+                    console.log('Updated total score:', totalScore);
+
+                    // 合算されたスコアを表示
+                    updateScore(totalScore);
+                })
+                .catch(error => {
+                    console.error('Error fetching score:', error);
+                });
         }
 
 
