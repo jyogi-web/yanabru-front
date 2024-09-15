@@ -91,6 +91,10 @@ def harehare():
     # 動画ファイルのパスを動的に生成
     video_file = url_for('static', filename='video/ハレ晴レユカイ反転.mp4')
     return render_template('game.html',video_file=video_file,link=link)
+  
+@app.route('/eigadancer')
+def eigadancer():
+    return render_template('eigadancer.html')
 
 @app.route('/landtest')
 def landtest():
