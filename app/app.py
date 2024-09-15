@@ -106,7 +106,7 @@ def reset_score():
         print("スコアがリセットされました")
     return jsonify({'status': 'Score reset'})
 
-@app.route('/submit-score', methods=['GET'])
+@app.route('/submit-score', methods=['POST'])
 def submit_score():
     global react_score
     data = request.json
