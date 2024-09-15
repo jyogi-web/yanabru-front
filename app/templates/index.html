@@ -107,7 +107,7 @@
             canvasCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
             canvasCtx.restore();
             player_landmarks = results.poseLandmarks;
-            console.log(player_landmarks);
+            // console.log(player_landmarks);
             if (player_landmarks) {
                 for (let landmark of player_landmarks) {
                     const x = landmark.x * videoWidth;
@@ -342,24 +342,35 @@
         //     updateScore(score);
         // }
 
+        let joyconPreviousScore = 0; // 前回取得したJoy-Conスコア
+
         // Joy-Conのスコアと既存のスコアを合算して表示する関数
         function fetchScore() {
             fetch('http://127.0.0.1:5000/get-score')
             .then(response => response.json())
             .then(data => {
-                // Joy-Conのスコアを取得
                 const joyconScore = data.score;
-
-                // Joy-Conのスコアと既存のtotalScoreを合算
-                const combinedScore = joyconScore + totalScore;
-
+                
+                // デバッグ用に現在取得したJoy-Conスコアを出力
+                console.log('Current Joy-Con score from server:', joyconScore);
+        
+                // Joy-Conスコアとの差分を計算して加算
+                const scoreDifference = joyconScore - joyconPreviousScore;
+                joyconPreviousScore = joyconScore;
+                
+                totalScore += scoreDifference;
+        
+                // デバッグ用に合算されたスコアを出力
+                console.log('Updated total score:', totalScore);
+        
                 // 合算されたスコアを表示
-                document.getElementById('score').innerText = combinedScore;
+                updateScore(totalScore);
             })
             .catch(error => {
                 console.error('Error fetching score:', error);
             });
         }
+
 
         // 0.1秒ごとにスコアを取得して更新
         setInterval(fetchScore, 100);

@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # グローバル変数としてスコアを保持
-global_score = 0
+global_score = [0]  # リストで初期化
 score_lock = threading.Lock()
 
 # ランドマークデータの保存先
@@ -66,12 +66,13 @@ def start_joycon():
     threading.Thread(target=joycon, args=(global_score, score_lock, start_time)).start()
     return jsonify({'status': 'Joy-Con processing started'}), 200
 
-# スコアを取得するエンドポイント
 @app.route('/get-score', methods=['GET'])
 def get_score():
-    # print("getscore!")
+    global global_score
     with score_lock:
-        return jsonify({'score': global_score}), 200
+        print(f"Returning global score: {global_score[0]}")  # デバッグ用に返されるスコアを出力
+        return jsonify({'score': global_score[0]})
 
+      
 if __name__ == '__main__':
     app.run(debug=True)
