@@ -8,7 +8,7 @@ import threading
 import time
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://red-grass-08143c200.5.azurestaticapps.net"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 # グローバル変数としてスコアを保持
@@ -111,13 +111,13 @@ def reset_score():
 def submit_score():
     global global_score
     data = request.json
+    print(f"Received data: {data}")  # デバッグ用に受信したデータを出力
     new_score = data.get('score', 0)
-    
     with score_lock:
         global_score[0] += new_score  # サーバー側のスコアに加算
         print(f"Updated global score: {global_score[0]}")  # デバッグ用にスコアを出力
-    
     return jsonify({'status': 'Score updated', 'current_score': global_score[0]})
+
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
