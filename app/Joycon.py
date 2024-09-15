@@ -3,6 +3,7 @@ import time
 from threading import Lock
 
 score_lock = Lock()
+global_score = [0]
 
 # タイミングデータ (島人ぬ宝)
 timing_data = {
@@ -14,7 +15,7 @@ timing_data = {
     "6": {"soundTimer": 15.27}
 }
 
-def joycon(global_score, score_lock,start_time):
+def joycon(global_score, score_lock, start_time):
     print("joycon開始―！！！")
 
     try:
@@ -27,7 +28,6 @@ def joycon(global_score, score_lock,start_time):
 
         timing_keys = list(timing_data.keys())  # タイミングデータのキーリストを取得
         current_timing_index = 0  # 現在のタイミングデータのインデックス
-
 
         while True:
             # 現在の経過時間を計算
@@ -57,18 +57,18 @@ def joycon(global_score, score_lock,start_time):
                 if target_time - time_tolerance <= elapsed_time <= target_time + missed_time_check:
                     if accel_change_x > threshold or accel_change_y > threshold or accel_change_z > threshold:
                         with score_lock:  # スコアの更新はスレッドセーフにする
-                            global_score += 1000
-                        print(f"タイミングに合わせて振りました！得点: {global_score}")
+                            global_score[0] += 1000  # リストの値を更新
+                        print(f"タイミングに合わせて振りました！得点: {global_score[0]}")
                         current_timing_index += 1  # 次のタイミングに進む
                 elif elapsed_time > target_time + missed_time_check:
                     # 次のタイミングを確認する
                     print(f"タイミング {current_timing_index} を逃しました。次へ。")
                     current_timing_index += 1
+
             # 現在の加速度データを前回のデータとして保存
             prev_accel = accel
 
-            # デバッグ用: 加速度データを表示
-            # print("加速度:", accel, "経過時間:", elapsed_time)
+            print("グローバルスコア：", global_score[0])
             time.sleep(0.1)  # 0.1秒ごとにチェック
 
     except Exception as e:
