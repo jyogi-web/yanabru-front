@@ -110,10 +110,13 @@ def submit_score():
     global react_score
     data = request.json
     print(f"Received data: {data}")  # デバッグ用に受信したデータを出力
-    new_score = data.get('score', 0)
+    # スコアの増加量を取得
+    increment = data.get('increment', 0)
     with score_lock:
-        react_score[0] += new_score  # Reactからのスコアに加算
+        # 増加量をReactからのスコアに加算
+        react_score[0] += increment
         print(f"Updated React score: {react_score[0]}")  # デバッグ用にスコアを出力
+    
     return jsonify({'status': 'Score updated', 'current_react_score': react_score[0]})
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ python -m venv [仮想環境名]
 ### 仮想環境のアクティベート
 #### Linux,Macの場合
 ```bash
- .\[仮想環境名]/bin/activate
+ .\venv/bin/activate
 ```
 #### Windowsの場合
 ```bash
