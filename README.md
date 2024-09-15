@@ -24,17 +24,18 @@ mediapipeの画像認識を用いてカメラからキャプチャしたダン�
 ## 仮想環境(venv)
 ### 仮想環境作成
 以下のコマンドを実行して仮想環境を作成する
+今回はvenvという名前で仮想環境を作成した。以降仮想環境名をvenvとする。
 ```bash
 python -m venv [仮想環境名]
 ```
 ### 仮想環境のアクティベート
 #### Linux,Macの場合
 ```bash
- .\[仮想環境名]/bin/activate
+ .\venv/bin/activate
 ```
 #### Windowsの場合
 ```bash
-.\[仮想環境名]\Scripts\activate
+.\venv\Scripts\activate
 ```
 
 ### 環境の適応

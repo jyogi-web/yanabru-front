@@ -375,7 +375,7 @@
                 //類似度を算出
                 similarity = calculateCosineSimilarity(R_landmarks1, R_landmarks2);
                 updateSimilarity(similarity);
-                document.getElementById("evaluation").style.fontSize = "25px";
+                document.getElementById("evaluation").style.fontSize = "30px";
 
 
                 //類似度をもとにスコアを加算
@@ -445,8 +445,12 @@
                 norm2 += (x2 * x2) + (y2 * y2);
             }
 
-            //値が高すぎたので0.8引いて5をかけた
-            similarity = (dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2)) - 0.8) * 5;
+            //-1~1の値
+            similarity = dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+            //+1して2で割ることで0～1の値に
+            similarity = (similarity + 1) / 2
+            //-0.9して10かける
+            similarity = (similarity - 0.8) * 5
             if (similarity < 0) {
                 similarity = 0;
             }
