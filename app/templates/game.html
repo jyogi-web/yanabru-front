@@ -33,7 +33,7 @@
             <!-- スタートボタン -->
             <button class="start-button" id="start-button">Start</button>
             <!-- やり直しボタン -->
-            <button class="retry-button" onclick='location.href="{{link}}" '>Retry</button>
+            <button class="retry-button" onclick='retryGame()" '>Retry</button>
         </td>
     </table>
 
@@ -75,9 +75,23 @@
             console.log('Saved landmarks:', savedLandmarks);
         }
 
+        function retryGame() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const songName = urlParams.get('song');
+            
+            if (songName) {
+                location.href = `?song=${songName}`;  // 曲名パラメータを再度渡してリトライ
+            } else {
+                alert('曲が選択されていません！');
+            }
+        }
+
         // スタートボタンを押したときの処理
         startButton.addEventListener('click', () => {
             if (!isStarted) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const songName = urlParams.get('song');  // 曲名を取得
+                
                 // 動画を再生する前にスコアをリセット
                 fetch('http://127.0.0.1:5000/reset-score', {
                     method: 'POST'
@@ -89,22 +103,31 @@
                 .catch(error => {
                     console.error('Error resetting score:', error);
                 });
-        
+
                 sampleVideoElement.play();
-                requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
+                requestAnimationFrame(drawSavedLandmarks);
                 isStarted = true;
+
+                // もし曲名が取得できていない場合、デフォルト値を適用しないようにする
+                if (!songName) {
+                    alert("曲が選択されていません！");
+                    return;
+                }
         
-                // Joycon.pyを並列で実行するAPIを呼び出す
                 fetch('http://127.0.0.1:5000/start-joycon', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ song_name: songName })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data.status);  // Joycon.pyの実行開始を確認
+                    console.log(data.status);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                });
+                });        
             }
         });
       

@@ -1,23 +1,18 @@
 from pyjoycon import JoyCon, get_R_id
 import time
+import json
 from threading import Lock
 
 score_lock = Lock()
 global_score = [0]
 
-# タイミングデータ (島人ぬ宝)
-timing_data = {
-    "1": {"soundTimer": 6.06},
-    "2": {"soundTimer": 8.45},
-    "3": {"soundTimer": 8.84},
-    "4": {"soundTimer": 12.45},
-    "5": {"soundTimer": 14.86},
-    "6": {"soundTimer": 15.27}
-}
+def joycon(score_list, score_lock, start_time, timing_data_file):
+    # JSONファイルからタイミングデータを読み込む
+    with open(timing_data_file, 'r') as file:
+        timing_data = json.load(file)
 
-def joycon(global_score, score_lock, start_time):
-    print("joycon開始―！！！")
 
+    print(timing_data)
     try:
         # Joy-ConのIDを取得
         joycon_id = get_R_id()

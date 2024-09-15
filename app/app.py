@@ -45,20 +45,33 @@ def index():
 
 @app.route('/eisa')
 def eisa():
-    link='/eisa'
+    song_name = request.args.get('song', 'eisa')  # デフォルトは島人ぬ宝
+    link = '/eisa'
     update_landmarks('app/static/landmarks/sample_landmarks(1m).json')
     #landmarks_file='app/static/landmarks/sample_landmarks(1m).json'
+
+    # 曲名に基づいてタイミングデータを取得する
+    timing_data_file = f'app/static/timing_data/{song_name}.json'
+    update_landmarks(timing_data_file)
+    
     # 動画ファイルのパスを動的に生成
-    video_file = url_for('static', filename='video/sample_1m.mp4')
+    video_file = url_for('static', filename='video/sample_1m.mp4',link=link)
+    
     return render_template('game.html',video_file=video_file,link=link)
 
 @app.route('/syounaxn')
 def syounaxn():
+    song_name = request.args.get('song', 'suirenka')  # デフォルトは湘南乃風
     link='/syounaxn'
     update_landmarks('app/static/landmarks/suirenka-mini_landmarks.json')
     #landmarks_file = 'app/static/landmarks/suirenka-mini_landmarks.json'
+    # 曲名に基づいてタイミングデータを取得する
+    timing_data_file = f'app/static/timing_data/{song_name}.json'
+    update_landmarks(timing_data_file)
+    
     # 動画ファイルのパスを動的に生成
     video_file = url_for('static', filename='video/JustDance_Suirenka_mini.mp4')
+
     return render_template('game.html',video_file=video_file,link=link)
 
 @app.route('/landtest')
@@ -84,10 +97,17 @@ def run_joycon():
 @app.route('/start-joycon', methods=['POST'])
 def start_joycon():
     print("start_joycon!!")
-    start_time = time.time()  # スタートボタンが押された時の時間を記録
-    # Joyconの処理をバックグラウンドで実行
-    threading.Thread(target=joycon, args=(global_score, score_lock, start_time)).start()
-    return jsonify({'status': 'Joy-Con processing started'}), 200
+    data = request.json  # フロントエンドからのデータを取得
+    song_name = data.get('song_name')  # 'song_name'が存在するか確認
+    print(f"Received song name: {song_name}")  # ログに出力して確認
+    
+    if song_name:
+        timing_data_file = f'app/static/timing_data/{song_name}.json'
+        start_time = time.time()
+        threading.Thread(target=joycon, args=(global_score, score_lock, start_time, timing_data_file)).start()
+        return jsonify({'status': 'Joy-Con processing started'}), 200
+    else:
+        return jsonify({'status': 'Error', 'message': 'No song name provided'}), 400
 
 @app.route('/get-score', methods=['GET'])
 def get_score():
