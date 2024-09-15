@@ -1,9 +1,12 @@
 from pyjoycon import JoyCon, get_R_id
 import time
+from threading import Lock
 
-def joycon():
-    # 得点を初期化
-    score = 0
+score_lock = Lock()
+
+
+def joycon(global_score, score_lock):
+    print("joycon開始―！！！")
 
     try:
         # Joy-ConのIDを取得
@@ -28,9 +31,9 @@ def joycon():
 
             # x, y, zのいずれかで振る動作を検知した場合に得点を加算
             if accel_change_x > threshold or accel_change_y > threshold or accel_change_z > threshold:
-                score += 10  # 得点を加算
-                print(f"Joy-Conを振りました！得点: {score}")
-
+                with score_lock:  # スコアの更新はスレッドセーフにする
+                    global_score += 10
+                print(f"Joy-Conを振りました！得点: {global_score}")
             # 現在の加速度データを前回のデータとして保存
             prev_accel = accel
 
