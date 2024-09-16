@@ -5,8 +5,10 @@ from .Joycon import joycon
 import subprocess
 import threading
 import time
+from flask_cors import CORS 
 
 app = Flask(__name__)
+CORS(app)  # 全エンドポイントでCORSを有効化
 
 # グローバル変数としてスコアを保持
 global_score = [0]  # リストで初期化
