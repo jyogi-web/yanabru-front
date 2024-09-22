@@ -38,6 +38,11 @@ python -m venv [仮想環境名]
 .\venv\Scripts\activate
 ```
 
+### 環境の適応
+```bash
+pip install -r requirements.txt
+```
+
 ### 依存関係書き出し
 ```bash
 pip freeze > requirements.txt

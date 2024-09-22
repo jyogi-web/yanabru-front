@@ -5,7 +5,7 @@ from .Joycon import joycon
 import subprocess
 import threading
 import time
-from flask_cors import CORS  # Flask-CORSをインポート
+from flask_cors import CORS 
 
 app = Flask(__name__)
 CORS(app)  # 全エンドポイントでCORSを有効化
