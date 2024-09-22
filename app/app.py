@@ -10,7 +10,6 @@ from flask_cors import CORS  # Flask-CORSをインポート
 app = Flask(__name__)
 CORS(app)  # 全エンドポイントでCORSを有効化
 
-
 # グローバル変数としてスコアを保持
 global_score = [0]  # リストで初期化
 score_lock = threading.Lock()
