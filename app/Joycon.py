@@ -7,12 +7,56 @@ global_score = [0]
 
 # タイミングデータ (島人ぬ宝)
 timing_data = {
-    "1": {"soundTimer": 6.06},
-    "2": {"soundTimer": 8.45},
-    "3": {"soundTimer": 8.84},
-    "4": {"soundTimer": 12.45},
-    "5": {"soundTimer": 14.86},
-    "6": {"soundTimer": 15.27}
+    "1" : {"soundTimer": 5.93},
+    "2" : {"soundTimer": 8.29},
+    "3" : {"soundTimer": 8.75},
+    "4" : {"soundTimer": 12.03},
+    "5" : {"soundTimer": 14.75},
+    "6" : {"soundTimer": 15.15},
+    "7" : {"soundTimer": 16.39},
+    "8" : {"soundTimer": 17.95},
+    "9" : {"soundTimer": 19.56},
+    "10": {"soundTimer": 21.12},
+    "11": {"soundTimer": 22.68},
+    "12": {"soundTimer": 24.39},
+    "13": {"soundTimer": 25.97},
+    "14": {"soundTimer": 27.62},
+    "15": {"soundTimer": 28.7},
+    "16": {"soundTimer": 29.43},
+    "17": {"soundTimer": 30.14},
+    "18": {"soundTimer": 31.69},
+    "19": {"soundTimer": 32.47},
+    "20": {"soundTimer": 33.25},
+    "21": {"soundTimer": 34.91},
+    "22": {"soundTimer": 36.42},
+    "23": {"soundTimer": 38.18},
+    "24": {"soundTimer": 38.99},
+    "25": {"soundTimer": 39.77},
+    "26": {"soundTimer": 41.45},
+    "27": {"soundTimer": 42.86},
+    "28": {"soundTimer": 44.57},
+    "29": {"soundTimer": 47.78},
+    "30": {"soundTimer": 49.46},
+    "31": {"soundTimer": 51.16},
+    "32": {"soundTimer": 52.02},
+    "33": {"soundTimer": 52.68},
+    "34": {"soundTimer": 53.51},
+    "35": {"soundTimer": 54.32},
+    "36": {"soundTimer": 55.12},
+    "37": {"soundTimer": 55.9},
+    "38": {"soundTimer": 56.7},
+    "39": {"soundTimer": 57.55},
+    "40": {"soundTimer": 59.6},
+    "41": {"soundTimer": 60.75},
+    "42": {"soundTimer": 62.33},
+    "43": {"soundTimer": 64.01},
+    "44": {"soundTimer": 65.52},
+    "45": {"soundTimer": 69.22},
+    "46": {"soundTimer": 69.7},
+    "47": {"soundTimer": 70.46},
+    "48": {"soundTimer": 71.39},
+    "49": {"soundTimer": 72.12},
+    "50": {"soundTimer": 73.73}
 }
 
 def joycon(global_score, score_lock, start_time):
@@ -57,7 +101,7 @@ def joycon(global_score, score_lock, start_time):
                 if target_time - time_tolerance <= elapsed_time <= target_time + missed_time_check:
                     if accel_change_x > threshold or accel_change_y > threshold or accel_change_z > threshold:
                         with score_lock:  # スコアの更新はスレッドセーフにする
-                            global_score[0] += 1000  # リストの値を更新
+                            global_score[0] += 100  # リストの値を更新
                         print(f"タイミングに合わせて振りました！得点: {global_score[0]}")
                         current_timing_index += 1  # 次のタイミングに進む
                 elif elapsed_time > target_time + missed_time_check:
