@@ -148,7 +148,12 @@ def upload_video():
 # メインエンドポイント
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # アップロードフォルダ内の.mp4ファイルを取得
+    video_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith('.mp4')]
+    # 対応するゲーム名をリストアップ
+    games = [os.path.splitext(f)[0] for f in video_files]
+    return render_template('index.html', games=games)
+
 
 @app.route('/eisa')
 def eisa():
