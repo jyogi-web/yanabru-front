@@ -1,42 +1,83 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>just eisa- index</title>
-    <link rel="stylesheet" href="../static/css/index.css">
-    <!-- BootStrapのリンク -->
+    <link href="{{ url_for('static', filename='css/video.css') }}" rel="stylesheet" />
+    <title>ダンスゲーム - 曲選択</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 
-<body class="container">
-    <h1 class="text-center my-4">ジャストエイサー</h1>
-    <h1 class="mb-4">動画アップロード</h1>
-    <!-- アップロードフォーム -->
-    <form action="/upload_video" method="post" enctype="multipart/form-data">
-        <input type="file" name="video" accept="video/*" required>
-        <button type="submit">アップロード</button>
-    </form>
-    <h2 class="text-center">遊べる曲リスト</h2>
-    <ul class="list-unstyled text-center">
-        <li><a href='/eisa' class="btn btn-primary btn-lg mb-2">島人ぬ宝</a></li>
-        <li><a href='/dynamic' class="btn btn-success btn-lg mb-2">ダイナミック琉球</a></li>
-        <li><a href='/suirenka' class="btn btn-info btn-lg mb-2">睡蓮花</a></li>
-        <li><a href='/marumori' class="btn btn-danger btn-lg mb-2">マル・マル・モリ・モリ</a></li>
-        <li><a href='/koi' class="btn btn-secondary btn-lg mb-2">恋</a></li>
-        <li><a href='/harehare' class="btn btn-light btn-lg mb-2">ハレ晴れユカイ</a></li>
-        <li><a href='/odoloop' class="btn btn-warning btn-lg mb-2">オドループ</a></li>
+<body>
+    <div class="container">
+        <h2 class="text-center mt-5">遊べる曲リスト</h2>
+        <ul class="list-unstyled text-center">
+            {% for game in games %}
+                <li>
+                    <a href="{{ url_for('game_page', game_name=game) }}" class="btn btn-primary btn-lg mb-2">
+                        {{ game }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
 
-        <!-- 隠し楽曲（左下） -->
+        <!-- ファイルアップロードフォームの追加（必要に応じて） -->
+        <div class="mt-4">
+            <h3>新しい曲をアップロード</h3>
+            <form id="uploadForm" action="/upload_video" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="video">動画ファイルを選択:</label>
+                    <input type="file" class="form-control-file" id="video" name="video" accept="video/*" required>
+                </div>
+                <button type="submit" class="btn btn-success">アップロード</button>
+            </form>
+            <div id="uploadResult" class="mt-3"></div>
+        </div>
+    </div>
 
-        <a href="/eigadancer" class="hidden-link btn btn-danger">エイガダンサー</a>
-    </ul>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileField = document.querySelector('input[type="file"][name="video"]');
 
-    <!-- BootStrapのJavaScriptとjQueryのリンク -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            if (fileField.files.length === 0) {
+                alert('ファイルを選択してください');
+                return;
+            }
+
+            formData.append('video', fileField.files[0]);
+
+            fetch('/upload_video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('uploadResult');
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `
+                        <p style="color: green;">アップロード成功: ${data.message}</p>
+                        <a href="${data.game_page_url}" class="btn btn-primary">ゲームページへ移動</a>
+                    `;
+                    // 曲リストを更新するにはページをリロード
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">アップロード失敗: ${data.message}</p>`;
+                }
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('エラー:', error);
+                document.getElementById('uploadResult').innerHTML = `<p style="color: red;">エラーが発生しました。</p>`;
+            });
+        });
+    </script>
 </body>
 
 </html>
