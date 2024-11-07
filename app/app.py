@@ -211,6 +211,33 @@ def harehare():
     video_file = url_for('static', filename='video/ハレ晴レユカイ反転.mp4')
     return render_template('game.html',video_file=video_file,link=link)
   
+@app.route('/game/<game_name>')
+def game_page(game_name):
+    """
+    指定されたゲーム名に基づいてゲームページを表示します。
+    ランドマークファイルと動画ファイルが存在するかを確認し、
+    存在する場合はgame.htmlテンプレートにデータを渡します。
+    """
+    landmark_file = os.path.join(LANDMARKS_FOLDER, f'{game_name}_landmarks.json')
+    video_file = f'uploads/{game_name}.mp4'
+
+    # 動画ファイルのフルパス
+    video_full_path = os.path.join(BASE_DIR, 'static', video_file)
+
+    # ランドマークファイルと動画ファイルの存在チェック
+    if not os.path.exists(landmark_file):
+        return jsonify({'status': 'error', 'message': 'ランドマークファイルが見つかりません'}), 404
+    if not os.path.exists(video_full_path):
+        return jsonify({'status': 'error', 'message': '動画ファイルが見つかりません'}), 404
+
+    # ランドマークファイルを更新
+    update_landmarks(landmark_file)
+
+    # 動画ファイルのURLを生成
+    video_url = url_for('static', filename=video_file)
+
+    return render_template('game.html', video_file=video_url, game_name=game_name)
+
 @app.route('/eigadancer')
 def eigadancer():
     return render_template('eigadancer.html')
