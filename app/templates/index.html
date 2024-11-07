@@ -14,11 +14,9 @@
     <h1 class="text-center my-4">ジャストエイサー</h1>
     <h1 class="mb-4">動画アップロード</h1>
     <!-- アップロードフォーム -->
-    <form id="uploadForm" enctype="multipart/form-data" class="mb-5">
-        <div class="form-group">
-            <input type="file" name="video" accept="video/*" class="form-control-file" required>
-        </div>
-        <button type="submit" class="btn btn-primary">アップロード</button>
+    <form action="/upload_video" method="post" enctype="multipart/form-data">
+        <input type="file" name="video" accept="video/*" required>
+        <button type="submit">アップロード</button>
     </form>
     <h2 class="text-center">遊べる曲リスト</h2>
     <ul class="list-unstyled text-center">

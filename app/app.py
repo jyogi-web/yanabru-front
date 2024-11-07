@@ -91,15 +91,18 @@ def extract_landmarks():
     video_path = request.json.get('video_path')
     save_path = request.json.get('save_path')
     target_fps = request.json.get('target_fps', 60)
-    
+
     extract_and_save_landmarks(video_path, save_path, target_fps)
     
     return jsonify({'status': 'success', 'message': 'Landmarks extracted and saved successfully.'})
 
 
 # ファイルアップロードエンドポイントの前に追加
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')  # 修正
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Flaskの設定にUPLOAD_FOLDERを追加
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # ファイルアップロードエンドポイント
 @app.route('/upload_video', methods=['POST'])
@@ -118,7 +121,7 @@ def upload_video():
 
     # ファイル名をサニタイズ
     filename = secure_filename(video.filename)
-    video_path = os.path.join(UPLOAD_FOLDER, filename)
+    video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     print(f"保存先のパス: {video_path}")
     
     try:
