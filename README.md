@@ -31,8 +31,9 @@ python -m venv [仮想環境名]
 ### 仮想環境のアクティベート
 #### Linux,Macの場合
 ```bash
- .\venv/bin/activate
+. venv/bin/activate
 ```
+ deactivateで仮想環境を抜けることができる
 #### Windowsの場合
 ```bash
 .\venv\Scripts\activate
