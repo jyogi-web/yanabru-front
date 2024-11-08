@@ -1,15 +1,12 @@
 from flask import Flask, render_template, jsonify, request,url_for, redirect
 import json
-import subprocess
-# from .Joycon import joycon
-import subprocess
 import threading
 import time
 from flask_cors import CORS 
 import os
 import cv2
-import glob
 import mediapipe as mp
+from pytubefix import YouTube
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -146,6 +143,45 @@ def upload_video():
         return jsonify({'status': 'error', 'message': 'Failed to extract landmarks'}), 500
     
     return jsonify({'status': 'success', 'message': 'Video uploaded and landmarks extracted successfully.'})
+
+@app.route('/process_youtube_video', methods=['POST'])
+def process_youtube_video():
+    data = request.get_json()
+    youtube_url = data.get('youtube_url')
+
+    try:
+        yt = YouTube(youtube_url)
+    
+        title = yt.title
+        thumbnail_url = yt.thumbnail_url
+        description = yt.description
+
+        video_path = os.path.join(UPLOAD_FOLDER, f"{yt.title}.mp4")
+                
+        yt.streams.get_highest_resolution().download(output_path=UPLOAD_FOLDER, filename=f"{yt.title}.mp4")
+
+        landmarks_filename = f"landmarks.json"
+        save_path = os.path.join(LANDMARKS_FOLDER, landmarks_filename)
+
+        # ランドマークの抽出と保存
+        try:
+            extract_and_save_landmarks(video_path, save_path)  
+            print(f"ランドマークを抽出して保存しました: {save_path}")
+        except Exception as e:
+            print(f"ランドマークの抽出中にエラーが発生しました: {e}")
+            return jsonify({'status': 'error', 'message': 'Failed to extract landmarks'}), 500
+
+        return jsonify({
+            'status': 'success',
+            'message': f'動画 "{title}" を処理しました。',
+            'thumbnail': thumbnail_url,
+            'description': description,
+            'landmarks_file': landmarks_filename  
+        })
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'エラーが発生しました: {str(e)}'})
+
 
 # メインエンドポイント
 @app.route('/')
