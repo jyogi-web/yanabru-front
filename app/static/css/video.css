@@ -38,3 +38,28 @@ canvas {
 .sim_eva {
     padding-right: 10vw;
 }
+/* styles.css */
+
+/* 通常のYouTube動画 */
+.regular-video iframe {
+    width: 560px;
+    height: 315px;
+    border: none;
+    border-radius: 8px;
+    transition: width 0.3s, height 0.3s;
+}
+
+/* YouTube Shorts動画 */
+.shorts-video iframe {
+    width: 300px;
+    height: 600px;
+    border: none;
+    border-radius: 8px;
+    transition: width 0.3s, height 0.3s;
+}
+
+/* レスポンシブデザインの例 */
+.video-container iframe {
+    max-width: 100%;
+    height: auto;
+}

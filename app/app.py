@@ -20,6 +20,8 @@ pose = mp_pose.Pose()
 global_score = [0]  # リストで初期化
 score_lock = threading.Lock()
 
+youtube_url = ""
+
 # 基本ディレクトリの取得
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -147,6 +149,7 @@ def upload_video():
 @app.route('/process_youtube_video', methods=['POST'])
 def process_youtube_video():
     data = request.get_json()
+    global youtube_url
     youtube_url = data.get('youtube_url')
 
     try:
@@ -199,9 +202,17 @@ def game_page(game_name):
     ランドマークファイルと動画ファイルが存在するかを確認し、
     存在する場合はgame.htmlテンプレートにデータを渡します。
     """
+    global youtube_url
+
+    # URLに'/shorts/'が含まれているか判定
+    if '/shorts/' in youtube_url:
+        video_type = 'shorts'
+    else:
+        video_type = 'regular'
+
     landmark_file = os.path.join(LANDMARKS_FOLDER, f'landmarks.json')
     video_file = f'uploads/{game_name}.mp4'
-
+    print(f"Youtubeリンク: {youtube_url}")
     # 動画ファイルのフルパス
     video_full_path = os.path.join(BASE_DIR, 'static', video_file)
 
@@ -217,7 +228,7 @@ def game_page(game_name):
     # 動画ファイルのURLを生成
     video_url = url_for('static', filename=video_file)
 
-    return render_template('game.html', video_file=video_url, game_name=game_name)
+    return render_template('game.html', video_file=video_url, game_name=game_name, youtube_url=youtube_url, video_type=video_type)
 
 
 # 動画削除

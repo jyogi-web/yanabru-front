@@ -63,7 +63,7 @@
     <div style="display: flex;">
         <!-- 左側の動画 -->
         <div class="movie" style="flex: 1; position: relative;">
-            <video id="sample-video">
+            <video id="sample-video" class="video-container {{ 'shorts-video' if video_type == 'shorts' else 'regular-video' }}">
                 <source src="{{video_file}}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
