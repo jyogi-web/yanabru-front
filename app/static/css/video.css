@@ -41,21 +41,33 @@ canvas {
 /* styles.css */
 
 /* 通常のYouTube動画 */
-.regular-video iframe {
-    width: 560px;
-    height: 315px;
+.regular-video {
+    width: 75vw;
+    height: auto;
     border: none;
     border-radius: 8px;
-    transition: width 0.3s, height 0.3s;
+}
+
+.regular-camera {
+    width: 25vw;
+    height: auto;
+    border: none;
+    border-radius: 8px;
 }
 
 /* YouTube Shorts動画 */
-.shorts-video iframe {
-    width: 300px;
-    height: 600px;
+.shorts-video {
+    width: 50vw;
+    height: auto;
     border: none;
     border-radius: 8px;
-    transition: width 0.3s, height 0.3s;
+}
+
+.shorts-camera {
+    width: 50vw;
+    height: auto;
+    border: none;
+    border-radius: 8px;
 }
 
 /* レスポンシブデザインの例 */

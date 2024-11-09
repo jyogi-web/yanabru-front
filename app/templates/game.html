@@ -62,8 +62,8 @@
 
     <div style="display: flex;">
         <!-- 左側の動画 -->
-        <div class="movie" style="flex: 1; position: relative;">
-            <video id="sample-video" class="video-container {{ 'shorts-video' if video_type == 'shorts' else 'regular-video' }}">
+        <div class="movie {{ 'shorts-video' if video_type == 'shorts' else 'regular-video' }}" style="flex: 1; position: relative;">
+            <video id="sample-video" class="video-container ">
                 <source src="{{video_file}}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -72,7 +72,7 @@
         </div>
 
         <!-- 右側のカメラ映像 -->
-        <div class="camera" style="flex: 1;position:relative;">
+        <div class="camera {{ 'shorts-camera' if video_type == 'shorts' else 'regular-camera' }}" style="flex: 1;position:relative;">
             <video id="live-video" autoplay></video>
             <canvas id="output-canvas"></canvas>
         </div>
