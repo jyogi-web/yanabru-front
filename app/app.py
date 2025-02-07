@@ -6,7 +6,7 @@ from flask_cors import CORS
 import os
 import cv2
 import mediapipe as mp
-from pytubefix import YouTube
+import yt_dlp 
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -150,38 +150,33 @@ def process_youtube_video():
     youtube_url = data.get('youtube_url')
 
     try:
-        yt = YouTube(youtube_url)
-    
-        title = yt.title
-        thumbnail_url = yt.thumbnail_url
-        description = yt.description
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': os.path.join(UPLOAD_FOLDER, '%(title)s.%(ext)s')
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=True)
+            video_path = os.path.join(UPLOAD_FOLDER, f"{info['title']}.mp4")
 
-        video_path = os.path.join(UPLOAD_FOLDER, f"{yt.title}.mp4")
-                
-        yt.streams.get_highest_resolution().download(output_path=UPLOAD_FOLDER, filename=f"{yt.title}.mp4")
+            # ランドマーク抽出
+            landmarks_filename = "landmarks.json"
+            save_path = os.path.join(LANDMARKS_FOLDER, landmarks_filename)
+            
+            try:
+                extract_and_save_landmarks(video_path, save_path)
+            except Exception as e:
+                return jsonify({'status': 'error', 'message': f'ランドマーク抽出エラー: {str(e)}'})
 
-        landmarks_filename = f"landmarks.json"
-        save_path = os.path.join(LANDMARKS_FOLDER, landmarks_filename)
-
-        # ランドマークの抽出と保存
-        try:
-            extract_and_save_landmarks(video_path, save_path)  
-            print(f"ランドマークを抽出して保存しました: {save_path}")
-        except Exception as e:
-            print(f"ランドマークの抽出中にエラーが発生しました: {e}")
-            return jsonify({'status': 'error', 'message': 'Failed to extract landmarks'}), 500
-
-        return jsonify({
-            'status': 'success',
-            'message': f'動画 "{title}" を処理しました。',
-            'thumbnail': thumbnail_url,
-            'description': description,
-            'landmarks_file': landmarks_filename  
-        })
+            return jsonify({
+                'status': 'success',
+                'message': f'動画 "{info["title"]}" を処理しました。',
+                'thumbnail': info.get('thumbnail'),
+                'description': info.get('description'),
+                'landmarks_file': landmarks_filename
+            })
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'エラーが発生しました: {str(e)}'})
-
 
 # メインエンドポイント
 @app.route('/')
