@@ -40,41 +40,45 @@ def update_landmarks(file):
     landmarks_file=file
 
 # 見本動画から骨格ランドマークを抽出し、保存
-def extract_and_save_landmarks(video_path, save_path, target_fps=60):
+def extract_and_save_landmarks(video_path, save_path, target_fps=30):
     cap = cv2.VideoCapture(video_path)
     landmarks_data = []
+    frame_count = 0
     
-    frame_interval = 1.0 / target_fps
-    prev_time = time.time()
-
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-
-        current_time = time.time()
-        if current_time - prev_time >= frame_interval:
-            # mediapipeで骨格検出
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = pose.process(frame_rgb)
             
-            if results.pose_landmarks:
-                landmarks = []
-                for landmark in results.pose_landmarks.landmark:
-                    landmarks.append({
-                        'x': landmark.x,
-                        'y': landmark.y,
-                        'z': landmark.z,
-                        'visibility': landmark.visibility
-                    })
-                landmarks_data.append(landmarks)
-            
-            prev_time = current_time
+        # 現在のフレーム時間を計算
+        timestamp = frame_count / target_fps
+        
+        # mediapipeで骨格検出
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(frame_rgb)
+        
+        if results.pose_landmarks:
+            landmarks = []
+            for landmark in results.pose_landmarks.landmark:
+                landmarks.append({
+                    'x': landmark.x,
+                    'y': landmark.y,
+                    'z': landmark.z,
+                    'visibility': landmark.visibility
+                })
+            # タイムスタンプとフレーム情報を保存
+            landmarks_data.append({
+                'timestamp': timestamp,
+                'frame': frame_count,
+                'landmarks': landmarks
+            })
+        
+        frame_count += 1
 
     cap.release()
-
-    with open(save_path, 'w',encoding='utf-8') as f:
-        json.dump(landmarks_data, f,ensure_ascii=False, indent=4)
+    
+    with open(save_path, 'w', encoding='utf-8') as f:
+        json.dump(landmarks_data, f, ensure_ascii=False, indent=4)
 
 # ランドマークデータを提供するエンドポイント
 @app.route('/get-pose-landmarks', methods=['GET'])
