@@ -80,7 +80,6 @@
     </div>
 
     <script>
-        // HTML要素の取得
         const sampleVideoElement = document.getElementById('sample-video');
         const sampleCanvasElement = document.getElementById('sample-canvas');
         const sampleCanvasCtx = sampleCanvasElement.getContext('2d');
@@ -121,20 +120,7 @@
                     requestAnimationFrame(drawSavedLandmarks);  // 保存されたランドマークを描画
                 },);//1秒待つ
 
-
                 isStarted = true;
-
-                // Joycon.pyを並列で実行するAPIを呼び出す
-                fetch('http://127.0.0.1:5000/start-joycon', {
-                    method: 'POST'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.status);  // Joycon.pyの実行開始を確認
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
             }
         });
 
@@ -170,8 +156,6 @@
                     canvasCtx.stroke();
                 }
             }
-
-            //sendPoseData(player_landmarks);
         }
 
         // ランドマークを左右反転させる関数
@@ -243,8 +227,6 @@
         const canvasElement = document.getElementById('output-canvas');
         const canvasCtx = canvasElement.getContext('2d');
 
-
-
         // MediaPipe Poseの初期化
         const pose = new Pose({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
@@ -268,28 +250,6 @@
             height: 480
         });
         camera.start();
-
-        // // Poseデータをサーバーに送信
-        // function sendPoseData(poseLandmarks) {
-        //     const poseData = poseLandmarks.map(landmark => ({
-        //         x: landmark.x,
-        //         y: landmark.y
-        //     }));
-
-        //     fetch('/pose-data', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({ joints: poseData }),
-        //     })
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             console.log('Success:', data);
-        //             updateScore(data.score);
-        //         })
-        //         .catch(error => console.error('Error:', error));
-        // }
 
         //スコアを加算
         function addScore(point) {
@@ -456,7 +416,6 @@
             }
             return similarity;
         }
-
         function isFullBodyVisible(landmarks) {
             // チェックしたいランドマークのインデックス
             const REQUIRED_LANDMARKS = [
@@ -465,47 +424,21 @@
                 27, 28,  // 左膝, 右膝
                 31, 32   // 左足先, 右足先
             ];
-
             // 全てのランドマークが存在するか確認
             return REQUIRED_LANDMARKS.every(index => landmarks[index] && landmarks[index].visibility > 0.5);
         }
-
-
-        // function updateScoreWithSimilarity(currentLandmarks, savedLandmarks) {
-        //     const relativeCurrent = getRelativeLandmarks(currentLandmarks);
-        //     const relativeSaved = getRelativeLandmarks(savedLandmarks);
-
-        //     const similarity = calculateCosineSimilarity(relativeCurrent, relativeSaved);
-
-        //     let score = 0;
-        //     if (similarity > 0.9) {  // 類似度が90%以上の場合にスコアを加算
-        //         score += Math.floor(similarity * 100);  // 類似度を元にスコア加算
-        //     }
-
-        //     updateScore(score);
-        // }
-
-        let joyconPreviousScore = 0; // 前回取得したJoy-Conスコア
-
         // Joy-Conのスコアと既存のスコアを合算して表示する関数
         function fetchScore() {
             fetch('http://127.0.0.1:5000/get-score')
                 .then(response => response.json())
                 .then(data => {
                     const joyconScore = data.score;
-
-                    // デバッグ用に現在取得したJoy-Conスコアを出力
-                    console.log('Current Joy-Con score from server:', joyconScore);
-
                     // Joy-Conスコアとの差分を計算して加算
                     const scoreDifference = joyconScore - joyconPreviousScore;
                     joyconPreviousScore = joyconScore;
-
                     totalScore += scoreDifference;
-
                     // デバッグ用に合算されたスコアを出力
                     console.log('Updated total score:', totalScore);
-
                     // 合算されたスコアを表示
                     updateScore(totalScore);
                 })
@@ -513,8 +446,6 @@
                     console.error('Error fetching score:', error);
                 });
         }
-
-
         // 0.1秒ごとにスコアを取得して更新
         setInterval(fetchScore, 100);
     </script>
