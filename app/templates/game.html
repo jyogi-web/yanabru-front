@@ -188,33 +188,29 @@
             sampleCanvasElement.width = videoWidth;
             sampleCanvasElement.height = videoHeight;
 
-            // 現在のフレームに対応するランドマークデータを取得
             const currentTime = sampleVideoElement.currentTime;
-            const fps = 30;  // 保存したランドマークのFPSに合わせる
-            const currentFrame = Math.floor(currentTime * fps);  // 指定のfpsでフレーム数を計算
 
-            console.log('Current frame:', currentFrame);
+            // 現在の時間に最も近いランドマークデータを探す
+            const currentLandmarks = savedLandmarks.find(frame =>
+                Math.abs(frame.timestamp - currentTime) < 0.033 // 1フレーム分の許容誤差
+            );
 
-            if (savedLandmarks[currentFrame]) {
+            if (currentLandmarks) {
                 sampleCanvasCtx.clearRect(0, 0, videoWidth, videoHeight);
-                sampleCanvasCtx.drawImage(sampleVideoElement, 0, 0, videoWidth, videoHeight);
 
-                const landmarks = savedLandmarks[currentFrame];
-
-                //スコア更新する
-                Comparison_Calculation(landmarks, player_landmarks);
-
-                for (let landmark of landmarks) {
+                for (let landmark of currentLandmarks.landmarks) {
                     const x = landmark.x * videoWidth;
                     const y = landmark.y * videoHeight;
                     sampleCanvasCtx.beginPath();
                     sampleCanvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';  // 赤色
+                    sampleCanvasCtx.fillStyle = 'rgb(255,0,0)';
                     sampleCanvasCtx.fill();
                     sampleCanvasCtx.stroke();
                 }
-            } else {
-                console.log('No landmarks for this frame');
+
+                if (player_landmarks) {
+                    Comparison_Calculation(currentLandmarks.landmarks, player_landmarks);
+                }
             }
 
             if (!sampleVideoElement.paused && !sampleVideoElement.ended) {
