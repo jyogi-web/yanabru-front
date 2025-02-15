@@ -2,3 +2,4 @@ __pycache__/
 venv/
 app/static/video/元動画/
 app/static/landmarks/
+app/static/uploads/
